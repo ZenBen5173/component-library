@@ -7,9 +7,16 @@
  * @height 760
  * @note The data is static and never changes — the motion is entirely in how it is drawn, which is the point. Live Charts is the other case, where the numbers themselves stream. Everything loops through `motion`, so the gallery's reduced-motion toggle stops all of it; nothing here is on a rAF loop of its own.
  */
-import { motion } from "motion/react";
+import { useRef, useState } from "react";
+import { AnimatePresence, motion } from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
-import { DURATION, EASE } from "@/lib/motion";
+import { DURATION, EASE, SPRING } from "@/lib/motion";
 
 const REVENUE = [42, 55, 48, 71, 65, 88, 79, 96];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
@@ -38,6 +45,20 @@ function linePath(values: number[]) {
 function AreaChart() {
   const d = linePath(REVENUE);
   const step = W / (REVENUE.length - 1);
+  const svgRef = useRef<SVGSVGElement>(null);
+  const [active, setActive] = useState<number | null>(null);
+
+  /** Client x → the nearest point index, through the viewBox scale. */
+  const track = (clientX: number) => {
+    const box = svgRef.current?.getBoundingClientRect();
+    if (!box) return;
+    const vx = ((clientX - box.left) / box.width) * W;
+    setActive(
+      Math.max(0, Math.min(REVENUE.length - 1, Math.round(vx / step))),
+    );
+  };
+
+  const y = (v: number) => H - (v / MAX) * (H - 24) - 12;
 
   return (
     <div className="overflow-hidden rounded-lg border border-border bg-card">
@@ -53,167 +74,185 @@ function AreaChart() {
         <span className="text-xs font-medium text-emerald-500">+18.2%</span>
       </div>
 
-      <svg viewBox={`0 0 ${W} ${H}`} className="mt-1 w-full" aria-hidden>
-        <defs>
-          {/* Drifts sideways forever, so the fill is never quite the same
-              twice even though the numbers behind it never move. */}
-          <linearGradient id="living-fill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="var(--chart-1)" stopOpacity="0.4" />
-            <stop offset="100%" stopColor="var(--chart-1)" stopOpacity="0.02" />
-          </linearGradient>
+      <div className="relative mt-1">
+        <svg
+          ref={svgRef}
+          viewBox={`0 0 ${W} ${H}`}
+          className="w-full"
+          onPointerMove={(e) => track(e.clientX)}
+          onPointerLeave={() => setActive(null)}
+        >
+          <defs>
+            <linearGradient id="living-fill" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="var(--chart-1)" stopOpacity="0.4" />
+              <stop offset="100%" stopColor="var(--chart-1)" stopOpacity="0.02" />
+            </linearGradient>
+          </defs>
 
-          <linearGradient
-            id="living-sheen"
-            x1="0"
-            y1="0"
-            x2="0.35"
-            y2="0"
-            gradientUnits="objectBoundingBox"
-          >
-            <stop offset="0%" stopColor="white" stopOpacity="0" />
-            <stop offset="50%" stopColor="white" stopOpacity="0.18" />
-            <stop offset="100%" stopColor="white" stopOpacity="0" />
-          </linearGradient>
+          <path d={`${d} L ${W} ${H} L 0 ${H} Z`} fill="url(#living-fill)" />
 
-          <clipPath id="living-clip">
-            <path d={`${d} L ${W} ${H} L 0 ${H} Z`} />
-          </clipPath>
-        </defs>
-
-        <path d={`${d} L ${W} ${H} L 0 ${H} Z`} fill="url(#living-fill)" />
-
-        {/* Sheen sweeping through the filled area. */}
-        <g clipPath="url(#living-clip)">
-          <motion.rect
-            y="0"
-            width={W * 0.6}
-            height={H}
-            fill="url(#living-sheen)"
-            initial={{ x: -W * 0.6 }}
-            animate={{ x: W }}
-            transition={{ duration: 5.5, ease: "linear", repeat: Infinity }}
+          <path
+            d={d}
+            fill="none"
+            stroke="var(--chart-1)"
+            strokeWidth={2}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            opacity={0.45}
           />
-        </g>
 
-        {/* The resting line. */}
-        <path
-          d={d}
-          fill="none"
-          stroke="var(--chart-1)"
-          strokeWidth={2}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          opacity={0.45}
-        />
+          {/* A short bright segment running the length of the line — the same
+              idea as the metal rim, applied to a stroke. */}
+          <motion.path
+            d={d}
+            fill="none"
+            stroke="var(--chart-1)"
+            strokeWidth={2.5}
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            pathLength={1}
+            strokeDasharray="0.12 0.88"
+            initial={{ strokeDashoffset: 1 }}
+            animate={{ strokeDashoffset: -1 }}
+            transition={{ duration: 4, ease: "linear", repeat: Infinity }}
+          />
 
-        {/* A short bright segment running the length of the line — the same
-            idea as the metal rim, applied to a stroke. */}
-        <motion.path
-          d={d}
-          fill="none"
-          stroke="var(--chart-1)"
-          strokeWidth={2.5}
-          strokeLinecap="round"
-          strokeLinejoin="round"
-          pathLength={1}
-          strokeDasharray="0.12 0.88"
-          initial={{ strokeDashoffset: 1 }}
-          animate={{ strokeDashoffset: -1 }}
-          transition={{ duration: 4, ease: "linear", repeat: Infinity }}
-        />
+          {/* Crosshair, snapped to the nearest point. */}
+          {active !== null && (
+            <motion.line
+              x1={active * step}
+              x2={active * step}
+              y1={0}
+              y2={H}
+              stroke="var(--muted-foreground)"
+              strokeWidth={1}
+              strokeDasharray="3 3"
+              opacity={0.5}
+              initial={false}
+              animate={{ x: 0 }}
+              transition={SPRING.default}
+            />
+          )}
 
-        {/* Points breathe in sequence rather than all at once. */}
-        {REVENUE.map((v, i) => {
-          const x = i * step;
-          const y = H - (v / MAX) * (H - 24) - 12;
-          return (
+          {/* Points breathe in sequence rather than all at once. */}
+          {REVENUE.map((v, i) => (
             <motion.circle
               key={MONTHS[i]}
-              cx={x}
-              cy={y}
-              r={2.5}
+              cx={i * step}
+              cy={y(v)}
+              r={active === i ? 4.5 : 2.5}
               fill="var(--chart-1)"
-              animate={{ opacity: [0.35, 1, 0.35], r: [2.5, 3.5, 2.5] }}
-              transition={{
-                duration: 3,
-                ease: "easeInOut",
-                repeat: Infinity,
-                delay: i * 0.22,
-              }}
+              stroke="var(--card)"
+              strokeWidth={active === i ? 2 : 0}
+              animate={
+                active === i
+                  ? { opacity: 1 }
+                  : { opacity: [0.35, 1, 0.35], r: [2.5, 3.5, 2.5] }
+              }
+              transition={
+                active === i
+                  ? { duration: DURATION.fast }
+                  : {
+                      duration: 3,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      delay: i * 0.22,
+                    }
+              }
             />
-          );
-        })}
-      </svg>
+          ))}
+        </svg>
+
+        {/* Springs between points rather than reappearing at each one. */}
+        <AnimatePresence>
+          {active !== null && (
+            <motion.div
+              initial={{ opacity: 0, y: 6 }}
+              animate={{
+                opacity: 1,
+                y: 0,
+                left: `${(active / (REVENUE.length - 1)) * 100}%`,
+              }}
+              exit={{ opacity: 0, y: 6 }}
+              transition={SPRING.default}
+              style={{ top: `${(y(REVENUE[active]) / H) * 100}%` }}
+              className="pointer-events-none absolute z-10 -translate-x-1/2 translate-y-3 whitespace-nowrap rounded-lg border border-border bg-popover px-3 py-2 shadow-lg"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-widest text-muted-foreground">
+                {MONTHS[active]}
+              </p>
+              <p className="mt-1 flex items-center gap-2 text-xs">
+                <span className="size-1.5 rounded-full bg-[var(--chart-1)]" />
+                <span className="text-muted-foreground">revenue</span>
+                <span className="ml-auto font-semibold tabular-nums">
+                  ${REVENUE[active]}k
+                </span>
+              </p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
 
       <div className="flex justify-between px-4 pb-3 text-[10px] text-muted-foreground">
-        {MONTHS.map((m) => (
-          <span key={m}>{m}</span>
+        {MONTHS.map((m, i) => (
+          <span
+            key={m}
+            className={cn(
+              "transition-colors",
+              active === i && "font-medium text-foreground",
+            )}
+          >
+            {m}
+          </span>
         ))}
       </div>
     </div>
   );
 }
 
-function ShimmerBars() {
+function BarChart() {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
       <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
         Weekly volume
       </p>
-      <div className="mt-4 flex h-32 items-end gap-2">
-        {REVENUE.map((v, i) => (
-          // h-full matters: `items-end` shrinks the column to its content, and
-          // a percentage height inside a zero-height parent resolves to zero —
-          // the bars simply do not draw.
-          <div key={MONTHS[i]} className="relative h-full flex-1">
-            <motion.div
-              className="absolute bottom-0 w-full overflow-hidden rounded-t-sm bg-gradient-to-t from-[var(--chart-1)]/30 to-[var(--chart-1)]/70"
-              // A real rise and fall, staggered along the row, so the whole
-              // chart reads as a wave rather than a still frame.
-              // Rests at its real value rather than 0 — if the loop never
-              // runs (reduced motion, a backgrounded tab), the chart still
-              // shows the data instead of an empty row.
-              initial={{ height: `${v}%` }}
-              animate={{ height: [`${v}%`, `${Math.min(v + 9, 100)}%`, `${v}%`] }}
-              transition={{
-                duration: 3.2,
-                ease: "easeInOut",
-                repeat: Infinity,
-                delay: i * 0.16,
-              }}
-            >
-              <motion.span
-                className="absolute inset-x-0 h-8 bg-gradient-to-t from-transparent via-white/45 to-transparent"
-                initial={{ y: "140%" }}
-                animate={{ y: "-140%" }}
-                transition={{
-                  duration: 2.4,
-                  ease: "easeInOut",
-                  repeat: Infinity,
-                  repeatDelay: 0.6,
-                  delay: i * 0.14,
-                }}
-              />
-            </motion.div>
-
-            {/* Tip light, so the top edge catches the eye as it moves. */}
-            <motion.span
-              className="absolute inset-x-0 h-[2px] rounded-full bg-[var(--chart-1)]"
-              initial={{ bottom: `${v}%`, opacity: 0.7 }}
-              animate={{
-                bottom: [`${v}%`, `${Math.min(v + 9, 100)}%`, `${v}%`],
-                opacity: [0.5, 1, 0.5],
-              }}
-              transition={{
-                duration: 3.2,
-                ease: "easeInOut",
-                repeat: Infinity,
-                delay: i * 0.16,
-              }}
-            />
-          </div>
-        ))}
-      </div>
+      <TooltipProvider delayDuration={80}>
+        <div className="mt-4 flex h-32 items-end gap-2">
+          {REVENUE.map((v, i) => (
+            // h-full matters: `items-end` shrinks the column to its content, and
+            // a percentage height inside a zero-height parent resolves to zero —
+            // the bars simply do not draw.
+            <Tooltip key={MONTHS[i]}>
+              <TooltipTrigger asChild>
+                <div className="group relative h-full flex-1 cursor-default">
+                  <motion.div
+                    className="absolute bottom-0 w-full rounded-t-sm bg-gradient-to-t from-[var(--chart-1)]/30 to-[var(--chart-1)]/70 transition-[filter] group-hover:brightness-125"
+                    // Rests at its real value rather than 0 — if the loop never
+                    // runs (reduced motion, a backgrounded tab), the chart still
+                    // shows the data instead of an empty row.
+                    initial={{ height: `${v}%` }}
+                    animate={{
+                      height: [`${v}%`, `${Math.min(v + 9, 100)}%`, `${v}%`],
+                    }}
+                    transition={{
+                      duration: 3.2,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      delay: i * 0.16,
+                    }}
+                  />
+                </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                <span className="font-medium">{MONTHS[i]}</span>
+                <span className="ml-2 tabular-nums text-muted-foreground">
+                  ${v}k
+                </span>
+              </TooltipContent>
+            </Tooltip>
+          ))}
+        </div>
+      </TooltipProvider>
       <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
         {MONTHS.map((m) => (
           <span key={m} className="flex-1 text-center">
@@ -272,27 +311,6 @@ function SheenRing() {
           </svg>
         </motion.div>
 
-        {/* A bright arc orbiting the band, faster than the ring itself. */}
-        <motion.div
-          className="absolute inset-0"
-          animate={{ rotate: 360 }}
-          transition={{ duration: 4.5, ease: "linear", repeat: Infinity }}
-        >
-          <svg width={size} height={size} className="-rotate-90" aria-hidden>
-            <circle
-              cx={size / 2}
-              cy={size / 2}
-              r={r}
-              fill="none"
-              stroke="white"
-              strokeOpacity={0.55}
-              strokeWidth={stroke}
-              strokeDasharray={`${c * 0.07} ${c}`}
-              strokeLinecap="round"
-            />
-          </svg>
-        </motion.div>
-
         <div className="absolute inset-0 grid place-items-center">
           <motion.span
             className="font-display text-xl font-semibold tabular-nums"
@@ -340,7 +358,7 @@ export default function LivingCharts() {
       >
         <AreaChart />
         <div className="grid gap-4 lg:grid-cols-2">
-          <ShimmerBars />
+          <BarChart />
           <SheenRing />
         </div>
       </motion.div>

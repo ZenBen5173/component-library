@@ -2,6 +2,12 @@
 
 import { useId } from "react";
 import { motion } from "motion/react";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 /**
@@ -61,18 +67,21 @@ export function SweepSparkline({
   data,
   className,
   duration = 5,
+  tooltip,
 }: {
   data: number[];
   className?: string;
   duration?: number;
+  /** Shown on hover. The line is too small to label in place. */
+  tooltip?: React.ReactNode;
 }) {
   const w = 96;
   const h = 28;
   const { defs, mask } = useSweep(w, h, duration, 0.55);
   const d = toPath(data, w, h, 2.5);
 
-  return (
-    <svg viewBox={`0 0 ${w} ${h}`} className={cn("overflow-visible", className)} aria-hidden>
+  const chart = (
+    <svg viewBox={`0 0 ${w} ${h}`} className={cn("overflow-visible", className)}>
       {defs}
       <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5}
         strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
@@ -80,7 +89,20 @@ export function SweepSparkline({
         <path d={d} fill="none" stroke="currentColor" strokeWidth={1.9}
           strokeLinecap="round" strokeLinejoin="round" />
       </g>
+      {/* A 1.5px stroke is not a hover target; this is. */}
+      <rect x={0} y={0} width={w} height={h} fill="transparent" />
     </svg>
+  );
+
+  if (!tooltip) return chart;
+
+  return (
+    <TooltipProvider delayDuration={80}>
+      <Tooltip>
+        <TooltipTrigger asChild>{chart}</TooltipTrigger>
+        <TooltipContent>{tooltip}</TooltipContent>
+      </Tooltip>
+    </TooltipProvider>
   );
 }
 
@@ -112,42 +134,60 @@ export function SheenRing({
   let offset = 0;
 
   return (
+    <TooltipProvider delayDuration={80}>
     <div className={cn("flex items-center gap-5", className)}>
-      <div className="relative shrink-0" style={{ width: size, height: size }}>
-        <motion.div
-          className="absolute inset-0"
-          animate={{ rotate: 360 }}
-          transition={{ duration: spin, ease: "linear", repeat: Infinity }}
+      <div
+        className="group/ring relative shrink-0"
+        style={{ width: size, height: size }}
+      >
+        {/* CSS rather than motion, so hovering pauses it where it stands.
+            Stopping a motion loop would snap the ring back to zero, and a
+            tooltip anchored to a segment that keeps turning drifts away from
+            the thing it labels. */}
+        <div
+          className="absolute inset-0 [animation:spin_var(--spin)_linear_infinite] group-hover/ring:[animation-play-state:paused]"
+          style={{ "--spin": `${spin}s` } as React.CSSProperties}
         >
-          <svg width={size} height={size} className="-rotate-90" aria-hidden>
+          <svg width={size} height={size} className="-rotate-90">
             {segments.map((seg, i) => {
               const len = (seg.value / total) * c;
               const dash = `${Math.max(len - 4, 0)} ${c - len + 4}`;
+              const share = Math.round((seg.value / total) * 100);
               const el = (
-                <motion.circle
-                  key={seg.label}
-                  cx={size / 2}
-                  cy={size / 2}
-                  r={r}
-                  fill="none"
-                  stroke={seg.tint}
-                  strokeDasharray={dash}
-                  strokeDashoffset={-offset}
-                  strokeLinecap="round"
-                  animate={{ strokeWidth: [stroke - 2, stroke + 2, stroke - 2] }}
-                  transition={{
-                    duration: 3.4,
-                    ease: "easeInOut",
-                    repeat: Infinity,
-                    delay: i * 0.35,
-                  }}
-                />
+                <Tooltip key={seg.label}>
+                  <TooltipTrigger asChild>
+                    <motion.circle
+                      cx={size / 2}
+                      cy={size / 2}
+                      r={r}
+                      fill="none"
+                      stroke={seg.tint}
+                      strokeDasharray={dash}
+                      strokeDashoffset={-offset}
+                      strokeLinecap="round"
+                      className="cursor-default"
+                      animate={{ strokeWidth: [stroke - 2, stroke + 2, stroke - 2] }}
+                      transition={{
+                        duration: 3.4,
+                        ease: "easeInOut",
+                        repeat: Infinity,
+                        delay: i * 0.35,
+                      }}
+                    />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <span className="font-medium">{seg.label}</span>
+                    <span className="ml-2 tabular-nums text-muted-foreground">
+                      {seg.value} · {share}%
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
               );
               offset += len;
               return el;
             })}
           </svg>
-        </motion.div>
+        </div>
 
         <div className="absolute inset-0 grid place-items-center text-center">
           <div>
@@ -181,6 +221,7 @@ export function SheenRing({
         ))}
       </ul>
     </div>
+    </TooltipProvider>
   );
 }
 
@@ -199,6 +240,7 @@ export function BreathingBars({
   const max = Math.max(...data) || 1;
 
   return (
+    <TooltipProvider delayDuration={80}>
     <div className={className}>
       <div className="flex h-28 items-end gap-2">
         {data.map((v, i) => {
@@ -206,7 +248,9 @@ export function BreathingBars({
           return (
             // h-full matters: `items-end` shrinks the column to its content, and
             // a percentage height inside a zero-height parent resolves to zero.
-            <div key={labels?.[i] ?? i} className="relative h-full flex-1">
+            <Tooltip key={labels?.[i] ?? i}>
+              <TooltipTrigger asChild>
+            <div className="relative h-full flex-1 cursor-default">
               <motion.div
                 className="absolute bottom-0 w-full rounded-t-sm"
                 style={{
@@ -224,18 +268,29 @@ export function BreathingBars({
                 }}
               />
             </div>
+              </TooltipTrigger>
+              <TooltipContent>
+                {labels?.[i] && (
+                  <span className="font-medium">{labels[i]}</span>
+                )}
+                <span className={cn("tabular-nums", labels?.[i] && "ml-2 text-muted-foreground")}>
+                  {v}
+                </span>
+              </TooltipContent>
+            </Tooltip>
           );
         })}
       </div>
       {labels && (
         <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
-          {labels.map((l) => (
-            <span key={l} className="flex-1 text-center">
+          {labels.map((l, i) => (
+            <span key={`${l}-${i}`} className="flex-1 text-center">
               {l}
             </span>
           ))}
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }

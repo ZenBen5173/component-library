@@ -1,8 +1,8 @@
 # Component Inventory
 
-**75 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**76 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
-## controls (13)
+## controls (14)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -12,6 +12,7 @@
 | [Cursor Card](src/registry/controls/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
 | [Fading Scroll Area](src/registry/controls/fading-scroll-area.tsx) | Scroll container whose top and bottom edges fade out, so cut-off rows read as continuing. | scroll-area, fade, list, mask, versatile |
 | [Link Hover Effects](src/registry/controls/link-hover-effects.tsx) | Five inline-link treatments — sliding underlines, swapped labels and masked reveals. | link, hover, underline, text, versatile |
+| [Liquid Metal](src/registry/controls/liquid-metal.tsx) | A WebGL shader used as a moving metal rim — on a button, and around an input that only comes alive once it has focus. | button, input, shader, webgl, metal, hover, portfolio |
 | [Magnetic Button](src/registry/controls/magnetic-button.tsx) | Button whose label and body lean toward the cursor, then spring back on exit. | micro-interaction, hover, spring, button |
 | [Scroll Progress Dial](src/registry/controls/scroll-progress-dial.tsx) | Draggable dial that tracks page scroll, with the percentage rolling on a NumberFlow readout. | scroll-progress, indicator, website, versatile |
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |

@@ -166,7 +166,7 @@ export function WaterRipples({
    * does the work, and displacement past about 1 looks like a fairground
    * mirror. Only push it up if the backdrop is busy enough to carry it.
    */
-  refraction = 0.1,
+  refraction = 1,
   /** Brightness of the light catching the surface. */
   specular = 0.5,
   /** Closer to 1 rings for longer. */

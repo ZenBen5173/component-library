@@ -118,6 +118,8 @@ When adding a component that animates outside of `motion` — canvas, GSAP, `req
 
 ## Using a component in a real project
 
+Full guide: [USING-THIS-LIBRARY.md](USING-THIS-LIBRARY.md).
+
 1. Copy the implementation file(s) listed in the entry's `@source`.
 2. Install the packages in `@deps`.
 3. Bring the tokens it uses — most components rely on the shadcn semantic names (`bg-background`, `text-muted-foreground`, `border-border`). Copy the `:root` / `.dark` blocks from [globals.css](src/app/globals.css).

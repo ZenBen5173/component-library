@@ -154,34 +154,54 @@ export function SheenRing({
               const dash = `${Math.max(len - 4, 0)} ${c - len + 4}`;
               const share = Math.round((seg.value / total) * 100);
               const el = (
-                <Tooltip key={seg.label}>
-                  <TooltipTrigger asChild>
-                    <motion.circle
-                      cx={size / 2}
-                      cy={size / 2}
-                      r={r}
-                      fill="none"
-                      stroke={seg.tint}
-                      strokeDasharray={dash}
-                      strokeDashoffset={-offset}
-                      strokeLinecap="round"
-                      className="cursor-default"
-                      animate={{ strokeWidth: [stroke - 2, stroke + 2, stroke - 2] }}
-                      transition={{
-                        duration: 3.4,
-                        ease: "easeInOut",
-                        repeat: Infinity,
-                        delay: i * 0.35,
-                      }}
-                    />
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <span className="font-medium">{seg.label}</span>
-                    <span className="ml-2 tabular-nums text-muted-foreground">
-                      {seg.value} · {share}%
-                    </span>
-                  </TooltipContent>
-                </Tooltip>
+                <g key={seg.label}>
+                  {/* Visual arc. Its width is animated, so it is not a
+                      reliable hit target — motion only sets stroke-width once
+                      the loop runs, and until then it computes to 1px. */}
+                  <motion.circle
+                    cx={size / 2}
+                    cy={size / 2}
+                    r={r}
+                    fill="none"
+                    stroke={seg.tint}
+                    strokeDasharray={dash}
+                    strokeDashoffset={-offset}
+                    strokeLinecap="round"
+                    style={{ pointerEvents: "none" }}
+                    animate={{ strokeWidth: [stroke - 2, stroke + 2, stroke - 2] }}
+                    transition={{
+                      duration: 3.4,
+                      ease: "easeInOut",
+                      repeat: Infinity,
+                      delay: i * 0.35,
+                    }}
+                  />
+
+                  {/* Hit target: fatter than the arc, and pointer-events
+                      "stroke" so it registers despite being transparent —
+                      "visiblePainted" would ignore it entirely. */}
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <circle
+                        cx={size / 2}
+                        cy={size / 2}
+                        r={r}
+                        fill="none"
+                        stroke="transparent"
+                        strokeWidth={stroke + 12}
+                        strokeDasharray={dash}
+                        strokeDashoffset={-offset}
+                        style={{ pointerEvents: "stroke", cursor: "default" }}
+                      />
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <span className="font-medium">{seg.label}</span>
+                      <span className="ml-2 tabular-nums text-muted-foreground">
+                        {seg.value} · {share}%
+                      </span>
+                    </TooltipContent>
+                  </Tooltip>
+                </g>
               );
               offset += len;
               return el;
@@ -189,7 +209,10 @@ export function SheenRing({
           </svg>
         </div>
 
-        <div className="absolute inset-0 grid place-items-center text-center">
+        {/* pointer-events-none is load-bearing: this covers the whole ring,
+            band included, so without it every hover lands here and the
+            segments underneath never see the pointer. */}
+        <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
           <div>
             {centre}
             {caption && (

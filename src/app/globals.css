@@ -409,3 +409,17 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* The theme toggle drives its own clip-path wipe on ::view-transition-new;
+   the default cross-fade would run underneath it and muddy the edge. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+::view-transition-old(root) {
+  z-index: 0;
+}
+::view-transition-new(root) {
+  z-index: 1;
+}

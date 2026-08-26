@@ -15,7 +15,9 @@ export function TodayButton() {
   return (
     <MotionButton
       variant="outline"
-      className="flex h-14 w-14 flex-col items-center justify-center p-0 text-center"
+      // overflow-hidden clips the solid month bar to the button radius —
+      // without it the bar keeps square corners and juts past them.
+      className="flex h-14 w-14 flex-col items-stretch justify-start gap-0 overflow-hidden p-0 text-center"
       onClick={handleClick}
       variants={buttonHover}
       whileHover="hover"
@@ -31,7 +33,9 @@ export function TodayButton() {
         {formatDate(today, "MMM").toUpperCase()}
       </motion.span>
       <motion.span
-        className="text-lg font-bold"
+        // Fills the height left under the bar and centres in it, rather than
+        // the bar and number being centred together as one block.
+        className="flex flex-1 items-center justify-center text-lg font-bold leading-none"
         initial={{ y: 10, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.2, ...transition }}

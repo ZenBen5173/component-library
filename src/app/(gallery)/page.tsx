@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { getCategories } from "@/lib/registry";
 import { EntryBrowser } from "@/components/gallery/entry-browser";
 
@@ -43,12 +42,6 @@ export default async function HomePage() {
       {total === 0 ? (
         <div className="mt-10 rounded-xl border border-dashed border-g-line p-10 text-center">
           <p className="text-sm font-medium">Nothing in the library yet.</p>
-          <p className="mx-auto mt-2 max-w-sm text-xs leading-relaxed text-g-dim">
-            Add a file to{" "}
-            <code className="font-mono">src/registry/heroes/my-hero.tsx</code>{" "}
-            with a default export, or run{" "}
-            <code className="font-mono">npm run new heroes my-hero</code>.
-          </p>
         </div>
       ) : (
         <div className="mt-8">
@@ -62,20 +55,6 @@ export default async function HomePage() {
         </div>
       )}
 
-      <footer className="mt-16 border-t border-g-line pt-6 text-xs leading-relaxed text-g-dim">
-        Drop a <code className="font-mono text-g-ink">.tsx</code> file with a
-        default export into{" "}
-        <code className="font-mono text-g-ink">
-          src/registry/&lt;category&gt;/
-        </code>{" "}
-        and it appears here on refresh — describe it in a leading{" "}
-        <code className="font-mono text-g-ink">/** @name … */</code> comment.
-        Full notes in{" "}
-        <Link href="/design" className="text-g-brand hover:underline">
-          Design System
-        </Link>
-        .
-      </footer>
     </div>
   );
 }

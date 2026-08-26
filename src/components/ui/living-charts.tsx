@@ -268,10 +268,15 @@ export function BreathingBars({
       <div className="flex h-28 items-end gap-2">
         {data.map((v, i) => {
           const pct = (v / max) * 100;
+          // h-full below matters: `items-end` shrinks the column to its
+          // content, and a percentage height inside a zero-height parent
+          // resolves to zero.
+          //
+          // Keyed by index, not label: day and month names repeat — two Ts and
+          // two Ss in a week — and duplicate keys make React drop or duplicate
+          // children.
           return (
-            // h-full matters: `items-end` shrinks the column to its content, and
-            // a percentage height inside a zero-height parent resolves to zero.
-            <Tooltip key={labels?.[i] ?? i}>
+            <Tooltip key={i}>
               <TooltipTrigger asChild>
             <div className="relative h-full flex-1 cursor-default">
               <motion.div

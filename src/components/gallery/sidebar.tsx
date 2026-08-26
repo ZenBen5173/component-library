@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, Search } from "lucide-react";
 import {
@@ -15,7 +14,6 @@ import {
   TreeView,
 } from "@/components/kibo-ui/tree";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./theme-toggle";
 
 export type SidebarEntry = {
   slug: string;
@@ -61,8 +59,6 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
       .filter((c) => c.entries.length > 0);
   }, [categories, query]);
 
-  const total = categories.reduce((n, c) => n + c.entries.length, 0);
-
   // Route drives selection: /controls/magnetic-button highlights the entry,
   // /controls highlights the category it lives in.
   const activeId = pathname.slice(1);
@@ -75,17 +71,7 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
       : [];
 
   return (
-    <aside className="flex h-dvh w-64 shrink-0 flex-col border-r border-g-line bg-g-surface">
-      <div className="flex items-center justify-between gap-2 border-b border-g-line px-4 py-3">
-        <Link href="/" className="min-w-0">
-          <div className="truncate text-sm font-semibold tracking-tight">
-            Component Library
-          </div>
-          <div className="text-[11px] text-g-dim">{total} components</div>
-        </Link>
-        <ThemeToggle />
-      </div>
-
+    <aside className="flex w-64 shrink-0 flex-col border-r border-g-line bg-g-surface">
       <div className="border-b border-g-line p-3">
         <div className="relative">
           <Search

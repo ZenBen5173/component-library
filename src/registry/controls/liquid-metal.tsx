@@ -15,8 +15,12 @@ import { LiquidMetal, LiquidMetalButton } from "@/components/ui/liquid-metal";
 import { prefersReducedMotion } from "@/lib/reduced-motion";
 import { cn } from "@/lib/utils";
 
-/** Rim thickness in px — the shader shows through the parent's padding. */
-const RIM = 2;
+/**
+ * Rim thickness in px — the shader shows through the parent's padding, so this
+ * is the whole effect. Below about 3px there is not enough band for the fluid
+ * pattern to read and it collapses into a plain coloured line.
+ */
+const RIM = 4;
 
 export default function LiquidMetalDemo() {
   const [focused, setFocused] = useState(false);
@@ -44,7 +48,7 @@ export default function LiquidMetalDemo() {
         >
           {live && (
             <LiquidMetal
-              colorBack="#6366f1"
+              colorBack="#888888"
               colorTint="#ffffff"
               speed={0.4}
               repetition={4}

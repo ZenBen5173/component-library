@@ -26,20 +26,32 @@ export type PaletteEntry = {
   tags: string[];
 };
 
-export function CommandPalette({ entries }: { entries: PaletteEntry[] }) {
-  const [open, setOpen] = useState(false);
+export function CommandPalette({
+  entries,
+  open: controlledOpen,
+  onOpenChange,
+}: {
+  entries: PaletteEntry[];
+  /** Omit to let the palette own its state; pass both to drive it from a trigger. */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) {
+  const [uncontrolled, setUncontrolled] = useState(false);
+  const controlled = controlledOpen !== undefined && onOpenChange !== undefined;
+  const open = controlled ? controlledOpen : uncontrolled;
+  const setOpen = controlled ? onOpenChange : setUncontrolled;
   const router = useRouter();
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
         e.preventDefault();
-        setOpen((v) => !v);
+        setOpen(!open);
       }
     };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
-  }, []);
+  }, [open, setOpen]);
 
   const groups = entries.reduce<Record<string, PaletteEntry[]>>((acc, e) => {
     (acc[e.categoryLabel] ??= []).push(e);

@@ -60,8 +60,8 @@ export function TopBar({
         {/* The two showcase pages, not registry categories — they are
             products built from the shelf rather than things on it. */}
         <nav className="hidden items-center gap-1 md:flex">
-          <TopLink href="/app">App Shell</TopLink>
-          <TopLink href="/logo">Logo Generator</TopLink>
+          <TopLink href="/app-shell">App Shell</TopLink>
+          <TopLink href="/logo-generator">Logo Generator</TopLink>
         </nav>
 
         <a

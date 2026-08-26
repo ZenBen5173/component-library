@@ -9,8 +9,8 @@ import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const PAGES = [
-  { href: "/app", label: "App Shell" },
-  { href: "/logo", label: "Logo Generator" },
+  { href: "/app-shell", label: "App Shell" },
+  { href: "/logo-generator", label: "Logo Generator" },
   { href: "/", label: "Library" },
 ];
 

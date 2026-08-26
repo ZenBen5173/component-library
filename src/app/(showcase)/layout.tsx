@@ -1,7 +1,11 @@
 import { ShowcaseBar } from "@/components/gallery/showcase-bar";
 
 /**
- * Full-bleed routes. These are the app shell and the logo generator shown as
+ * Full-bleed routes.
+ *
+ * Named app-shell and logo-generator rather than app and logo: `app` is a
+ * registry category, and a static /app route silently shadowed the App UI
+ * category listing — the page still resolved, it just showed the wrong thing. These are the app shell and the logo generator shown as
  * products rather than catalogue entries, so they get the whole viewport and
  * only a thin bar to get back out of.
  */

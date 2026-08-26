@@ -430,15 +430,19 @@
 /* Scoped to the gallery's own toggle, which drives its wipe from script and
    needs the default cross-fade out of the way. It must not be global: other
    theme toggles in this library animate these same pseudo-elements with CSS
-   keyframes, and an unscoped `animation: none` silently kills them. */
-[data-vt-wipe] ::view-transition-old(root),
-[data-vt-wipe] ::view-transition-new(root) {
+   keyframes, and an unscoped `animation: none` silently kills them.
+
+   No space before the pseudo-element: view-transition pseudos attach to the
+   root element itself, so a descendant combinator matches nothing at all and
+   the default cross-fade keeps running over the top of the wipe. */
+[data-vt-wipe]::view-transition-old(root),
+[data-vt-wipe]::view-transition-new(root) {
   animation: none;
   mix-blend-mode: normal;
 }
-[data-vt-wipe] ::view-transition-old(root) {
+[data-vt-wipe]::view-transition-old(root) {
   z-index: 0;
 }
-[data-vt-wipe] ::view-transition-new(root) {
+[data-vt-wipe]::view-transition-new(root) {
   z-index: 1;
 }

@@ -51,21 +51,29 @@ export function ThemeToggle() {
     const transition = document.startViewTransition(() =>
       flushSync(() => setTheme(next)),
     );
-    transition.ready.then(() => {
-      document.documentElement.animate(
-        {
-          clipPath: [
-            `circle(0px at ${x}px ${y}px)`,
-            `circle(${radius}px at ${x}px ${y}px)`,
-          ],
-        },
-        {
-          duration: DURATION.slow * 1000,
-          easing: `cubic-bezier(${EASE.expressive.join(",")})`,
-          pseudoElement: "::view-transition-new(root)",
-        },
-      );
-    });
+    // A skipped transition rejects `ready` — the browser skips it whenever the
+    // document is hidden. The theme has already changed by then, so there is
+    // nothing to recover, but an uncaught rejection would surface as an error.
+    // A skipped transition rejects `ready` — the browser skips it whenever the
+    // document is hidden. The theme has already changed by then, so there is
+    // nothing to recover, but an uncaught rejection would surface as an error.
+    transition.ready
+      .then(() => {
+        document.documentElement.animate(
+          {
+            clipPath: [
+              `circle(0px at ${x}px ${y}px)`,
+              `circle(${radius}px at ${x}px ${y}px)`,
+            ],
+          },
+          {
+            duration: DURATION.slow * 1000,
+            easing: `cubic-bezier(${EASE.expressive.join(",")})`,
+            pseudoElement: "::view-transition-new(root)",
+          },
+        );
+      })
+      .catch(() => {});
   };
 
   return (

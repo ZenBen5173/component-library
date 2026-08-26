@@ -62,4 +62,5 @@ Then:
 Components come from several sources with different terms. See
 [CREDITS.md](CREDITS.md). Two of them permit use but forbid republication, so
 they are absent from the public repository — if a component you want is
-missing, that is why, and installing it from its own site is the fix.
+missing, that is why. [MISSING-COMPONENTS.md](MISSING-COMPONENTS.md) lists every
+absent component with the command to install it from its origin.

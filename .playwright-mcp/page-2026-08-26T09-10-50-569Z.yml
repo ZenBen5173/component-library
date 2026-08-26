@@ -1,0 +1,49 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Mark generator" [level=2] [ref=e6]
+        - paragraph [ref=e7]: Geometric tiles on a 4×4 grid, turned into symmetry
+      - generic [ref=e8]: seed 013527da
+    - generic [ref=e9]:
+      - generic [ref=e104]:
+        - paragraph [ref=e105]:
+          - generic [ref=e106]: "N"
+          - generic [ref=e107]: o
+          - generic [ref=e108]: r
+          - generic [ref=e109]: t
+          - generic [ref=e110]: h
+          - generic [ref=e111]: w
+          - generic [ref=e112]: i
+          - generic [ref=e113]: "n"
+          - generic [ref=e114]: d
+        - paragraph [ref=e115]: lines · indigo · squircle
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - text: Style
+          - generic [ref=e118]:
+            - button "Arcs" [ref=e119]
+            - button "Blocks" [ref=e121]
+            - button "Lines" [active] [ref=e122]
+        - generic [ref=e123]:
+          - text: Palette
+          - generic [ref=e124]:
+            - button "Indigo" [pressed] [ref=e125]
+            - button "Ember" [ref=e126]
+            - button "Mint" [ref=e127]
+            - button "Sky" [ref=e128]
+            - button "Rose" [ref=e129]
+            - button "Paper" [ref=e130]
+        - generic [ref=e131]:
+          - button [ref=e132]
+          - button [ref=e140]
+        - generic [ref=e146]:
+          - text: Holds up small
+          - generic [ref=e147]:
+            - generic [ref=e148]: "48"
+            - generic [ref=e187]: "32"
+            - generic [ref=e226]: "20"
+        - generic [ref=e265]:
+          - text: Recent
+          - paragraph [ref=e267]: Marks you generate land here.
+  - alert [ref=e269]

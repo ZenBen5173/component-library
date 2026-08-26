@@ -1,0 +1,13 @@
+[     536ms] [INFO] %cDownload the React DevTools for a better development experience: https://react.dev/link/react-devtools font-weight:bold @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_compiled_react-dom_1e674e59._.js:14537
+[    1599ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:3333/favicon.ico:0
+[    4645ms] [WARNING] The resource http://localhost:3333/_next/static/chunks/%5Broot-of-the-server%5D__09ee0653._.css was preloaded using link preload but not used within a few seconds from the window's load event. Please make sure it has an appropriate `as` value and it is preloaded intentionally. @ http://localhost:3333/preview/app/logo-generator:0
+[   29115ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   29355ms] [LOG] [Fast Refresh] done in 349ms @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   48729ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   48791ms] [LOG] [Fast Refresh] done in 163ms @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   50365ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   50522ms] [LOG] [Fast Refresh] done in 272ms @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   59300ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   59365ms] [LOG] [Fast Refresh] done in 172ms @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816
+[   61825ms] [LOG] [Fast Refresh] rebuilding @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5956
+[   61897ms] [LOG] [Fast Refresh] done in 176ms @ http://localhost:3333/_next/static/chunks/node_modules_next_dist_client_cf1d9188._.js:5816

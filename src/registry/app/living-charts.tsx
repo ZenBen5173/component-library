@@ -162,32 +162,63 @@ function ShimmerBars() {
       </p>
       <div className="mt-4 flex h-32 items-end gap-2">
         {REVENUE.map((v, i) => (
-          <div key={MONTHS[i]} className="relative flex-1">
+          // h-full matters: `items-end` shrinks the column to its content, and
+          // a percentage height inside a zero-height parent resolves to zero —
+          // the bars simply do not draw.
+          <div key={MONTHS[i]} className="relative h-full flex-1">
             <motion.div
-              className="relative w-full overflow-hidden rounded-t-sm bg-[var(--chart-1)]/25"
-              style={{ height: `${v}%` }}
-              // A slow breath, offset per bar, so the row is never level.
-              animate={{ opacity: [0.75, 1, 0.75] }}
+              className="absolute bottom-0 w-full overflow-hidden rounded-t-sm bg-gradient-to-t from-[var(--chart-1)]/30 to-[var(--chart-1)]/70"
+              // A real rise and fall, staggered along the row, so the whole
+              // chart reads as a wave rather than a still frame.
+              // Rests at its real value rather than 0 — if the loop never
+              // runs (reduced motion, a backgrounded tab), the chart still
+              // shows the data instead of an empty row.
+              initial={{ height: `${v}%` }}
+              animate={{ height: [`${v}%`, `${Math.min(v + 9, 100)}%`, `${v}%`] }}
               transition={{
-                duration: 3.4,
+                duration: 3.2,
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.12,
+                delay: i * 0.16,
               }}
             >
               <motion.span
-                className="absolute inset-x-0 h-1/2 bg-gradient-to-t from-transparent via-[var(--chart-1)]/70 to-transparent"
-                initial={{ y: "120%" }}
-                animate={{ y: "-120%" }}
+                className="absolute inset-x-0 h-8 bg-gradient-to-t from-transparent via-white/45 to-transparent"
+                initial={{ y: "140%" }}
+                animate={{ y: "-140%" }}
                 transition={{
-                  duration: 2.8,
+                  duration: 2.4,
                   ease: "easeInOut",
                   repeat: Infinity,
-                  delay: i * 0.18,
+                  repeatDelay: 0.6,
+                  delay: i * 0.14,
                 }}
               />
             </motion.div>
+
+            {/* Tip light, so the top edge catches the eye as it moves. */}
+            <motion.span
+              className="absolute inset-x-0 h-[2px] rounded-full bg-[var(--chart-1)]"
+              initial={{ bottom: `${v}%`, opacity: 0.7 }}
+              animate={{
+                bottom: [`${v}%`, `${Math.min(v + 9, 100)}%`, `${v}%`],
+                opacity: [0.5, 1, 0.5],
+              }}
+              transition={{
+                duration: 3.2,
+                ease: "easeInOut",
+                repeat: Infinity,
+                delay: i * 0.16,
+              }}
+            />
           </div>
+        ))}
+      </div>
+      <div className="mt-2 flex justify-between text-[10px] text-muted-foreground">
+        {MONTHS.map((m) => (
+          <span key={m} className="flex-1 text-center">
+            {m}
+          </span>
         ))}
       </div>
     </div>
@@ -203,54 +234,73 @@ function SheenRing() {
 
   return (
     <div className="flex items-center gap-5 rounded-lg border border-border bg-card p-4">
-      <div className="relative shrink-0">
-        <svg width={size} height={size} className="-rotate-90" aria-hidden>
-          {CHANNELS.map((seg) => {
-            const len = (seg.value / 100) * c;
-            const dash = `${len - 3} ${c - len + 3}`;
-            const el = (
-              <motion.circle
-                key={seg.label}
-                cx={size / 2}
-                cy={size / 2}
-                r={r}
-                fill="none"
-                stroke={seg.tint}
-                strokeWidth={stroke}
-                strokeDasharray={dash}
-                strokeDashoffset={-offset}
-                strokeLinecap="round"
-                animate={{ opacity: [0.72, 1, 0.72] }}
-                transition={{
-                  duration: 3.6,
-                  ease: "easeInOut",
-                  repeat: Infinity,
-                  delay: offset / c,
-                }}
-              />
-            );
-            offset += len;
-            return el;
-          })}
-        </svg>
-
-        {/* Sheen rotating over the ring, clipped to the donut band. */}
+      <div className="relative shrink-0" style={{ width: size, height: size }}>
+        {/* The whole ring turns. Opacity alone read as static — nothing was
+            actually moving, which is what made it look dead. */}
         <motion.div
-          className="pointer-events-none absolute inset-0 rounded-full"
-          style={{
-            background:
-              "conic-gradient(from 0deg, transparent 0deg, rgba(255,255,255,0.22) 30deg, transparent 70deg)",
-            mask: `radial-gradient(circle, transparent ${r - stroke / 2}px, black ${r - stroke / 2}px, black ${r + stroke / 2}px, transparent ${r + stroke / 2}px)`,
-            WebkitMask: `radial-gradient(circle, transparent ${r - stroke / 2}px, black ${r - stroke / 2}px, black ${r + stroke / 2}px, transparent ${r + stroke / 2}px)`,
-          }}
+          className="absolute inset-0"
           animate={{ rotate: 360 }}
-          transition={{ duration: 7, ease: "linear", repeat: Infinity }}
-        />
+          transition={{ duration: 26, ease: "linear", repeat: Infinity }}
+        >
+          <svg width={size} height={size} className="-rotate-90" aria-hidden>
+            {CHANNELS.map((seg, i) => {
+              const len = (seg.value / 100) * c;
+              const dash = `${len - 4} ${c - len + 4}`;
+              const el = (
+                <motion.circle
+                  key={seg.label}
+                  cx={size / 2}
+                  cy={size / 2}
+                  r={r}
+                  fill="none"
+                  stroke={seg.tint}
+                  strokeDasharray={dash}
+                  strokeDashoffset={-offset}
+                  strokeLinecap="round"
+                  animate={{ strokeWidth: [stroke - 2, stroke + 2, stroke - 2] }}
+                  transition={{
+                    duration: 3.4,
+                    ease: "easeInOut",
+                    repeat: Infinity,
+                    delay: i * 0.35,
+                  }}
+                />
+              );
+              offset += len;
+              return el;
+            })}
+          </svg>
+        </motion.div>
+
+        {/* A bright arc orbiting the band, faster than the ring itself. */}
+        <motion.div
+          className="absolute inset-0"
+          animate={{ rotate: 360 }}
+          transition={{ duration: 4.5, ease: "linear", repeat: Infinity }}
+        >
+          <svg width={size} height={size} className="-rotate-90" aria-hidden>
+            <circle
+              cx={size / 2}
+              cy={size / 2}
+              r={r}
+              fill="none"
+              stroke="white"
+              strokeOpacity={0.55}
+              strokeWidth={stroke}
+              strokeDasharray={`${c * 0.07} ${c}`}
+              strokeLinecap="round"
+            />
+          </svg>
+        </motion.div>
 
         <div className="absolute inset-0 grid place-items-center">
-          <span className="font-display text-xl font-semibold tabular-nums">
+          <motion.span
+            className="font-display text-xl font-semibold tabular-nums"
+            animate={{ opacity: [0.75, 1, 0.75] }}
+            transition={{ duration: 3.4, ease: "easeInOut", repeat: Infinity }}
+          >
             44%
-          </span>
+          </motion.span>
         </div>
       </div>
 
@@ -260,12 +310,12 @@ function SheenRing() {
             <motion.span
               className="size-2 shrink-0 rounded-full"
               style={{ background: seg.tint }}
-              animate={{ opacity: [0.5, 1, 0.5] }}
+              animate={{ scale: [1, 1.45, 1], opacity: [0.55, 1, 0.55] }}
               transition={{
-                duration: 3.6,
+                duration: 3.4,
                 ease: "easeInOut",
                 repeat: Infinity,
-                delay: i * 0.3,
+                delay: i * 0.35,
               }}
             />
             <span className="flex-1 truncate text-muted-foreground">

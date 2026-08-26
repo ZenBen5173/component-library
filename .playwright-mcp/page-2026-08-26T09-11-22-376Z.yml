@@ -1,0 +1,47 @@
+- generic [ref=e1]:
+  - generic [ref=e3]:
+    - generic [ref=e4]:
+      - generic [ref=e5]:
+        - heading "Mark generator" [level=2] [ref=e6]
+        - paragraph [ref=e7]: Geometric tiles on a 4×4 grid, turned into symmetry
+      - generic [ref=e8]: seed 5e4cd571
+    - generic [ref=e9]:
+      - generic [ref=e104]:
+        - paragraph [ref=e319]:
+          - generic [ref=e320]: H
+          - generic [ref=e321]: a
+          - generic [ref=e322]: l
+          - generic [ref=e323]: c
+          - generic [ref=e324]: "y"
+          - generic [ref=e325]: o
+          - generic [ref=e326]: "n"
+        - paragraph [ref=e115]: blocks · indigo · squircle
+      - generic [ref=e116]:
+        - generic [ref=e117]:
+          - text: Style
+          - generic [ref=e118]:
+            - button "Arcs" [ref=e119]
+            - button "Blocks" [ref=e121]
+            - button "Lines" [ref=e122]
+        - generic [ref=e123]:
+          - text: Palette
+          - generic [ref=e124]:
+            - button "Indigo" [pressed] [ref=e125]
+            - button "Ember" [ref=e126]
+            - button "Mint" [ref=e127]
+            - button "Sky" [ref=e128]
+            - button "Rose" [ref=e129]
+            - button "Paper" [ref=e130]
+        - generic [ref=e131]:
+          - button [active] [ref=e132]
+          - button [ref=e140]
+        - generic [ref=e146]:
+          - text: Holds up small
+          - generic [ref=e147]:
+            - generic [ref=e148]: "48"
+            - generic [ref=e187]: "32"
+            - generic [ref=e226]: "20"
+        - generic [ref=e265]:
+          - text: Recent
+          - button "Restore Northwind" [ref=e327]
+  - alert [ref=e269]

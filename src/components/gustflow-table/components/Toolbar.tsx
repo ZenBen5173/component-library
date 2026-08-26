@@ -1,7 +1,9 @@
 "use client";
 
 import { useRef, useEffect, useState } from "react";
-import { Search, Filter, X, Layers, Download, Trash2, Bookmark, Star } from "lucide-react";
+import { Search, Filter, X, Layers, Download, Trash2, Bookmark, Star, Columns3 } from "lucide-react";
+import { ColumnVisibilityMenu } from "./ColumnHeader";
+import type { ColumnDef } from "../types";
 import { cn } from "@/lib/utils";
 
 export type ToolbarSavedView = {
@@ -20,6 +22,11 @@ interface ToolbarProps {
   toggleSearchOpen: () => void;
   hasActiveFilters: boolean;
   clearAllFilters: () => void;
+  /** Column visibility — lives beside the other table-wide controls rather
+      than in the header row, where it read as one more column. */
+  allColumns?: ColumnDef[];
+  hiddenColumns?: Set<string>;
+  toggleColumn?: (key: string) => void;
   /** Sprint 5.5 — when set, shows "Grouped by <label> ✕" pill in the toolbar. */
   groupByLabel?: string | null;
   clearGroupBy?: () => void;
@@ -54,6 +61,9 @@ export function Toolbar({
   toggleSearchOpen,
   hasActiveFilters,
   clearAllFilters,
+  allColumns,
+  hiddenColumns,
+  toggleColumn,
   groupByLabel,
   clearGroupBy,
   onExportCsv,
@@ -69,6 +79,8 @@ export function Toolbar({
   viewType,
   setViewType,
 }: ToolbarProps) {
+  const colMenuBtnRef = useRef<HTMLButtonElement>(null);
+  const [colMenuOpen, setColMenuOpen] = useState(false);
   const [viewsMenuOpen, setViewsMenuOpen] = useState(false);
   const [savePromptOpen, setSavePromptOpen] = useState(false);
   const [newViewName, setNewViewName] = useState("");
@@ -299,6 +311,36 @@ export function Toolbar({
         >
           {hasActiveFilters ? <X className="h-4 w-4" /> : <Filter className="h-4 w-4" />}
         </button>
+
+        {/* Column visibility — next to filter, since both narrow what the
+            table shows. */}
+        {allColumns && hiddenColumns && toggleColumn && (
+          <div className="relative">
+            <button
+              ref={colMenuBtnRef}
+              type="button"
+              onClick={() => setColMenuOpen((o) => !o)}
+              className={cn(
+                "p-2 rounded-md transition-colors",
+                colMenuOpen || hiddenColumns.size > 0
+                  ? "text-primary bg-primary/10"
+                  : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]",
+              )}
+              title="Show/hide columns"
+            >
+              <Columns3 className="h-4 w-4" />
+            </button>
+            {colMenuOpen && (
+              <ColumnVisibilityMenu
+                columns={allColumns}
+                hiddenColumns={hiddenColumns}
+                toggleColumn={toggleColumn}
+                onClose={() => setColMenuOpen(false)}
+                anchorRef={colMenuBtnRef}
+              />
+            )}
+          </div>
+        )}
 
         {/* Section J3 — CSV export */}
         {onExportCsv && (

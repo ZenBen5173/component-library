@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { flushSync } from "react-dom";
 import { useTheme } from "next-themes";
 import { AnimatePresence, motion } from "motion/react";
 import { Moon, Sun } from "lucide-react";
@@ -44,7 +45,12 @@ export function ThemeToggle() {
       Math.max(y, window.innerHeight - y),
     );
 
-    const transition = document.startViewTransition(() => setTheme(next));
+    // flushSync matters: startViewTransition snapshots the DOM when its
+    // callback resolves, and React would otherwise batch setTheme to a later
+    // tick — the snapshot would catch the old theme and nothing would wipe.
+    const transition = document.startViewTransition(() =>
+      flushSync(() => setTheme(next)),
+    );
     transition.ready.then(() => {
       document.documentElement.animate(
         {

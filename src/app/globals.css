@@ -237,11 +237,16 @@
 /* shadcn's semantic tokens now resolve to Radix steps rather than hand-picked
    values, so every existing component inherits the scale automatically. */
 :root {
-  --background: var(--slate-1);
+  /* Light mode needs three separated planes. Radix slate 1 and 2 differ by
+     about one percent at the light end, so page and card resolved to the same
+     white and every panel disappeared. Page sits on slate-2, raised surfaces
+     go pure white, the rail recedes to slate-3. Dark mode keeps the scale as
+     it is — the steps separate properly down there. */
+  --background: var(--slate-2);
   --foreground: var(--slate-12);
-  --card: var(--slate-2);
+  --card: #ffffff;
   --card-foreground: var(--slate-12);
-  --popover: var(--slate-2);
+  --popover: #ffffff;
   --popover-foreground: var(--slate-12);
   --primary: var(--indigo-9);
   --primary-foreground: white;
@@ -261,14 +266,26 @@
   --chart-3: var(--amber-9);
   --chart-4: var(--red-9);
   --chart-5: var(--slate-9);
-  --sidebar: var(--slate-2);
+  --sidebar: var(--slate-3);
   --sidebar-foreground: var(--slate-12);
   --sidebar-primary: var(--indigo-9);
   --sidebar-primary-foreground: white;
-  --sidebar-accent: var(--slate-4);
+  --sidebar-accent: var(--slate-5);
   --sidebar-accent-foreground: var(--slate-12);
   --sidebar-border: var(--slate-6);
   --sidebar-ring: var(--indigo-8);
+}
+
+/* Must come after :root — both are one class of specificity, so order decides.
+   Dark keeps the original mapping (page on slate-1, raised surfaces on
+   slate-2), which separates fine at this end of the scale. Without this the
+   light-mode literals above leak into dark and cards render white. */
+.dark {
+  --background: var(--slate-1);
+  --card: var(--slate-2);
+  --popover: var(--slate-2);
+  --sidebar: var(--slate-2);
+  --sidebar-accent: var(--slate-4);
 }
 
 @theme inline {

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3, Eye, EyeOff } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -185,7 +185,7 @@ function ColumnConfigPanel({
 
 // --- Column visibility menu ---
 
-interface ColumnVisibilityMenuProps {
+export interface ColumnVisibilityMenuProps {
   columns: ColumnDef[];
   hiddenColumns: Set<string>;
   toggleColumn: (key: string) => void;
@@ -193,7 +193,7 @@ interface ColumnVisibilityMenuProps {
   anchorRef: React.RefObject<HTMLElement | null>;
 }
 
-function ColumnVisibilityMenu({ columns, hiddenColumns, toggleColumn, onClose, anchorRef }: ColumnVisibilityMenuProps) {
+export function ColumnVisibilityMenu({ columns, hiddenColumns, toggleColumn, onClose, anchorRef }: ColumnVisibilityMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
 
@@ -486,8 +486,6 @@ export function ColumnHeaderRow({
   setGroupBy,
   selectionHeader,
 }: ColumnHeaderRowProps) {
-  const colMenuBtnRef = useRef<HTMLButtonElement>(null);
-  const [colMenuOpen, setColMenuOpen] = useState(false);
 
   // Stable ID for the DndContext. useId() returns the same string on
   // both server and client renders, which keeps `aria-describedby` in
@@ -574,35 +572,6 @@ export function ColumnHeaderRow({
             );
           })}
 
-          {/* Column visibility. Sits flush at the end of the band rather than
-              in a padded cell, which made it read as one more column, and
-              carries a columns icon — "..." named nothing. */}
-          <div className="ml-auto flex shrink-0 items-center pl-1 pr-1.5">
-            <button
-              ref={colMenuBtnRef}
-              type="button"
-              onClick={() => setColMenuOpen(!colMenuOpen)}
-              className={cn(
-                "grid size-7 place-items-center rounded-md transition-colors",
-                colMenuOpen
-                  ? "bg-[var(--card)] text-[var(--foreground)]"
-                  : "text-[var(--muted-foreground)] hover:bg-[var(--card)] hover:text-[var(--foreground)]",
-              )}
-              title="Show/hide columns"
-              aria-label="Show or hide columns"
-            >
-              <Columns3 className="h-3.5 w-3.5" />
-            </button>
-            {colMenuOpen && (
-              <ColumnVisibilityMenu
-                columns={allColumns}
-                hiddenColumns={hiddenColumns}
-                toggleColumn={toggleColumn}
-                onClose={() => setColMenuOpen(false)}
-                anchorRef={colMenuBtnRef}
-              />
-            )}
-          </div>
         </div>
       </SortableContext>
     </DndContext>

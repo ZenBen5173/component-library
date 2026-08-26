@@ -183,6 +183,9 @@ export function DataTable({
           toggleSearchOpen={state.toggleSearchOpen}
           hasActiveFilters={state.hasActiveFilters}
           clearAllFilters={state.clearAllFilters}
+          allColumns={columns}
+          hiddenColumns={state.hiddenColumns}
+          toggleColumn={state.toggleColumn}
           groupByLabel={
             state.groupBy
               ? state.orderedColumns.find((c) => c.key === state.groupBy)?.label ?? state.groupBy

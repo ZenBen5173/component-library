@@ -1,6 +1,6 @@
 # Component Inventory
 
-**67 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**66 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (6)
 
@@ -54,7 +54,7 @@
 | [Spacing, Radii & Shadows](src/registry/design/spacing-radii-shadows.tsx) | The scales components should pull from, so values stop being invented per component. | spacing, radius, shadow, tokens, design-system |
 | [Typography](src/registry/design/typography.tsx) | Type scale, weights and line heights — plus the case for replacing system-ui with a real typeface. | typography, fonts, scale, design-system |
 
-## App UI (21)
+## App UI (20)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -62,7 +62,6 @@
 | [Breadcrumbs](src/registry/app/breadcrumbs.tsx) | Trail that staggers in on mount, with animated separators and a hover state on each crumb. | breadcrumb, navigation, app |
 | [Calendar View](src/registry/app/calendar-view.tsx) | Full event calendar — month, week, day, year and agenda views, with drag-to-move, resize and event editing. | calendar, schedule, events, drag-drop, app |
 | [Carousel](src/registry/app/carousel.tsx) | Stacked card carousel — cards recede behind the active one, with autoplay, arrows and indicators. | carousel, slider, testimonials, cards, app |
-| [Charts](src/registry/app/charts.tsx) | KPI tiles with drawing sparklines, an area chart with a tracking crosshair and live pulse, staggered bars and a sweeping donut. | chart, data, analytics, recharts, dashboard, animated, app |
 | [Combobox](src/registry/app/combobox.tsx) | Searchable select with keyboard navigation and animated option filtering — for lists too long for a plain select. | combobox, select, search, autocomplete, form, app |
 | [Data Table](src/registry/app/data-table.tsx) | Your GustFlow table, ported — multi-sort, nested AND/OR filters, group-by, column resize/reorder/hide, footer aggregates, CSV export and virtualised rows. | table, data, sorting, filtering, grouping, virtualised, app |
 | [Date Picker](src/registry/app/date-picker.tsx) | Full month calendar in a popover, plus a compact inline strip for picking a day near today. | date, calendar, picker, form, app |
@@ -70,8 +69,8 @@
 | [File Upload](src/registry/app/file-upload.tsx) | Drag-and-drop dropzone with file-type and size limits, plus a filled state listing what was accepted. | upload, dropzone, file, form, app |
 | [Form Validation](src/registry/app/form-validation.tsx) | Real form wiring — schema validation, per-field errors, and a submit button that shows pending state. | form, validation, zod, react-hook-form, app |
 | [Kanban Board](src/registry/app/kanban.tsx) | Drag-and-drop board — cards move between columns with pointer and keyboard, backed by dnd-kit. | kanban, board, drag-drop, dnd-kit, app |
-| [Live Charts](src/registry/app/live-charts.tsx) | Charts that keep moving — an area chart that scrolls continuously with a pulsing leading edge, sparklines that stream, and a gauge that drifts to new readings. | chart, data, analytics, dashboard, animated, live, app, must-have |
 | [Living Charts](src/registry/app/living-charts.tsx) | Fixed figures that never sit still — a light travelling the line, a drifting gradient under it, bars caught by a sweeping shimmer, and a ring with a rotating sheen. | chart, data, analytics, dashboard, animated, hover, must-have, app |
+| [Logo Generator](src/registry/app/logo-generator.tsx) | Generative brand marks laid out from geometric tiles — pick a style and a palette, press once for a new mark, copy it as SVG. | logo, brand, generative, svg, geometry, icon, app |
 | [OTP Input](src/registry/app/otp-input.tsx) | Six-digit code entry — digits animate in as you type, paste fills every box, backspace walks back. | otp, input, auth, verification, form, app |
 | [Pagination](src/registry/app/pagination.tsx) | Page numbers with a highlight that slides between them on a spring — the same shared-layout trick as the tabs. | pagination, navigation, sliding-indicator, app |
 | [Resizable Panels](src/registry/app/resizable-panels.tsx) | Drag-to-resize split panes, nested and persistable — the shell for editors, inspectors and previews. | resizable, split-pane, layout, editor, app |

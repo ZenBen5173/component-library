@@ -6,9 +6,9 @@
  * @tags logo, brand, generative, svg, geometry, icon, app
  * @height 780
  * @deps motion, lucide-react
- * @note Marks come from a seeded LCG rather than Math.random, so the server and the first client render agree — the seed only moves when you press. Symmetry is an SVG transform rather than mirrored geometry, so the two halves cannot drift apart. Copy SVG serialises from the same tile model the stage renders, so the clipboard gets the settled mark and never a tile caught mid-spring.
+ * @note Marks come from a seeded LCG rather than Math.random, so the server and the first client render agree — the seed only moves when you press. Symmetry is an SVG transform rather than mirrored geometry, so the two halves cannot drift apart. Copy SVG serialises from the same tile model the stage renders, so the clipboard gets the settled mark and never a tile caught mid-spring. The pointer tilt checks `prefersReducedMotion()` on hover, not on mount: the gallery sets its flag from an ancestor effect, and those run after the effects in here — worth knowing for any other entry that guards by hand.
  */
-import { useEffect, useId, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   AnimatePresence,
   motion,
@@ -24,58 +24,93 @@ import { prefersReducedMotion } from "@/lib/reduced-motion";
 
 /* --------------------------------------------------------------- geometry */
 
-const CELL = 30;
-const COLS = 4;
-const ROWS = 4;
-const HALF_COLS = COLS / 2;
-const SIZE = CELL * COLS;
+const SIZE = 120;
 
-const DISC = CELL * 0.34;
-const RING_OUT = CELL * 0.38;
-const RING_IN = CELL * 0.19;
+type Kind =
+  | "quarter"
+  | "half"
+  | "leaf"
+  | "disc"
+  | "ring"
+  | "square"
+  | "tri"
+  | "bar"
+  | "truchet"
+  | "arc"
+  | "cross"
+  | "diagonal";
 
-/** One tile, drawn in a CELL-sized box at the origin. Rotation is applied on top. */
-const PATHS = {
-  quarter: `M0 0H${CELL}A${CELL} ${CELL} 0 0 1 0 ${CELL}Z`,
-  half: `M0 ${CELL / 2}A${CELL / 2} ${CELL / 2} 0 0 1 ${CELL} ${CELL / 2}Z`,
-  leaf: `M0 ${CELL}A${CELL} ${CELL} 0 0 1 ${CELL} 0A${CELL} ${CELL} 0 0 1 0 ${CELL}Z`,
-  disc: `M${CELL / 2} ${CELL / 2 - DISC}A${DISC} ${DISC} 0 1 0 ${CELL / 2} ${CELL / 2 + DISC}A${DISC} ${DISC} 0 1 0 ${CELL / 2} ${CELL / 2 - DISC}Z`,
-  ring: `M${CELL / 2 - RING_OUT} ${CELL / 2}a${RING_OUT} ${RING_OUT} 0 1 0 ${RING_OUT * 2} 0a${RING_OUT} ${RING_OUT} 0 1 0 ${-RING_OUT * 2} 0ZM${CELL / 2 - RING_IN} ${CELL / 2}a${RING_IN} ${RING_IN} 0 1 0 ${RING_IN * 2} 0a${RING_IN} ${RING_IN} 0 1 0 ${-RING_IN * 2} 0Z`,
-  square: `M0 0H${CELL}V${CELL}H0Z`,
-  tri: `M0 0H${CELL}L0 ${CELL}Z`,
-  bar: `M0 0H${CELL}V${CELL / 2}H0Z`,
-  truchet: `M${CELL / 2} 0A${CELL / 2} ${CELL / 2} 0 0 1 0 ${CELL / 2}M${CELL} ${CELL / 2}A${CELL / 2} ${CELL / 2} 0 0 0 ${CELL / 2} ${CELL}`,
-  arc: `M0 ${CELL / 2}A${CELL / 2} ${CELL / 2} 0 0 1 ${CELL} ${CELL / 2}`,
-  diagonal: `M0 0L${CELL} ${CELL}`,
-} as const;
+/**
+ * One tile, drawn in a cell-sized box at the origin. Rotation is applied on top.
+ * Built per cell size rather than once: a line mark wants a couple of large
+ * gestures where a filled mark wants sixteen small ones, so the two styles run
+ * on different grids and their tiles are different sizes.
+ */
+const pathCache = new Map<number, Record<Kind, string>>();
 
-type Kind = keyof typeof PATHS;
+function pathsFor(cell: number): Record<Kind, string> {
+  const cached = pathCache.get(cell);
+  if (cached) return cached;
+
+  const h = cell / 2;
+  const d = cell * 0.34;
+  const ro = cell * 0.38;
+  const ri = cell * 0.19;
+
+  const paths: Record<Kind, string> = {
+    quarter: `M0 0H${cell}A${cell} ${cell} 0 0 1 0 ${cell}Z`,
+    half: `M0 ${h}A${h} ${h} 0 0 1 ${cell} ${h}Z`,
+    leaf: `M0 ${cell}A${cell} ${cell} 0 0 1 ${cell} 0A${cell} ${cell} 0 0 1 0 ${cell}Z`,
+    disc: `M${h} ${h - d}A${d} ${d} 0 1 0 ${h} ${h + d}A${d} ${d} 0 1 0 ${h} ${h - d}Z`,
+    ring: `M${h - ro} ${h}a${ro} ${ro} 0 1 0 ${ro * 2} 0a${ro} ${ro} 0 1 0 ${-ro * 2} 0ZM${h - ri} ${h}a${ri} ${ri} 0 1 0 ${ri * 2} 0a${ri} ${ri} 0 1 0 ${-ri * 2} 0Z`,
+    square: `M0 0H${cell}V${cell}H0Z`,
+    tri: `M0 0H${cell}L0 ${cell}Z`,
+    bar: `M0 0H${cell}V${h}H0Z`,
+    truchet: `M${h} 0A${h} ${h} 0 0 1 0 ${h}M${cell} ${h}A${h} ${h} 0 0 0 ${h} ${cell}`,
+    arc: `M0 ${h}A${h} ${h} 0 0 1 ${cell} ${h}`,
+    cross: `M${h} 0V${cell}M0 ${h}H${cell}`,
+    diagonal: `M0 0L${cell} ${cell}`,
+  };
+
+  pathCache.set(cell, paths);
+  return paths;
+}
 
 /**
  * Pools are weighted by repetition — three `quarter` entries against one `disc`
  * is what keeps a style recognisable rather than a bag of unrelated shapes. The
  * `null` is deliberate negative space, roughly one tile in seven.
  */
-type StyleDef = { id: string; label: string; stroke: boolean; pool: (Kind | null)[] };
+type StyleDef = {
+  id: string;
+  label: string;
+  stroke: boolean;
+  /** Cells per side. Half of them are generated; the rest is symmetry. */
+  grid: number;
+  pool: (Kind | null)[];
+};
 
 const STYLES: StyleDef[] = [
   {
     id: "arcs",
     label: "Arcs",
     stroke: false,
+    grid: 4,
     pool: ["quarter", "quarter", "quarter", "half", "half", "leaf", "disc", null],
   },
   {
     id: "blocks",
     label: "Blocks",
     stroke: false,
+    grid: 4,
     pool: ["tri", "tri", "tri", "square", "bar", "bar", "disc", "ring", null],
   },
   {
     id: "lines",
     label: "Lines",
     stroke: true,
-    pool: ["truchet", "truchet", "truchet", "truchet", "arc", "arc", "diagonal", null, null],
+    grid: 2,
+    pool: ["truchet", "truchet", "arc", "arc", "disc", "cross", "diagonal", null],
   },
 ];
 
@@ -117,13 +152,21 @@ function lcg(seed: number) {
 }
 
 type Tile = { kind: Kind | null; rot: number; tone: number };
-type Mark = { tiles: Tile[]; stroke: boolean; radius: number; mirror: boolean };
+type Mark = {
+  tiles: Tile[];
+  stroke: boolean;
+  radius: number;
+  mirror: boolean;
+  grid: number;
+  cell: number;
+};
 
 function buildMark(seed: number, style: StyleDef): Mark {
   const rand = lcg(seed);
+  const cell = SIZE / style.grid;
   const tiles: Tile[] = [];
 
-  for (let i = 0; i < HALF_COLS * ROWS; i++) {
+  for (let i = 0; i < (style.grid / 2) * style.grid; i++) {
     tiles.push({
       kind: style.pool[Math.floor(rand() * style.pool.length)],
       rot: Math.floor(rand() * 4) * 90,
@@ -133,8 +176,9 @@ function buildMark(seed: number, style: StyleDef): Mark {
 
   // A half that comes up mostly empty reads as a mistake rather than as
   // negative space, so backfill until the mark carries some weight.
+  const minFilled = Math.max(1, Math.round(tiles.length * 0.55));
   const filled = () => tiles.filter((t) => t.kind).length;
-  for (let i = 0; i < tiles.length && filled() < 5; i++) {
+  for (let i = 0; i < tiles.length && filled() < minFilled; i++) {
     if (!tiles[i].kind) tiles[i] = { ...tiles[i], kind: style.pool[0] };
   }
 
@@ -143,21 +187,26 @@ function buildMark(seed: number, style: StyleDef): Mark {
     stroke: style.stroke,
     radius: rand() < 0.32 ? SIZE / 2 : SIZE * 0.22,
     mirror: rand() < 0.7,
+    grid: style.grid,
+    cell,
   };
 }
 
 type Placed = { key: number; d: string; transform: string; paint: string };
 
 function placeTiles(mark: Mark, palette: Palette): Placed[] {
+  const paths = pathsFor(mark.cell);
+  const halfCols = mark.grid / 2;
   const out: Placed[] = [];
+
   mark.tiles.forEach((tile, i) => {
     if (!tile.kind) return;
-    const col = i % HALF_COLS;
-    const row = Math.floor(i / HALF_COLS);
+    const col = i % halfCols;
+    const row = Math.floor(i / halfCols);
     out.push({
       key: i,
-      d: PATHS[tile.kind],
-      transform: `translate(${col * CELL} ${row * CELL}) rotate(${tile.rot} ${CELL / 2} ${CELL / 2})`,
+      d: paths[tile.kind],
+      transform: `translate(${col * mark.cell} ${row * mark.cell}) rotate(${tile.rot} ${mark.cell / 2} ${mark.cell / 2})`,
       paint: palette.tones[tile.tone],
     });
   });
@@ -197,7 +246,6 @@ function MarkArt({
   depth?: { x: MotionValue<number>; y: MotionValue<number> };
   className?: string;
 }) {
-  const clip = `logo-clip-${useId().replace(/:/g, "")}`;
   const tiles = placeTiles(mark, palette);
 
   const paint = (t: Placed) =>
@@ -205,7 +253,7 @@ function MarkArt({
       ? {
           fill: "none",
           stroke: t.paint,
-          strokeWidth: CELL * 0.2,
+          strokeWidth: mark.cell * 0.17,
           strokeLinecap: "round" as const,
           strokeLinejoin: "round" as const,
         }
@@ -239,22 +287,22 @@ function MarkArt({
   );
 
   return (
-    <svg viewBox={`0 0 ${SIZE} ${SIZE}`} className={className} aria-hidden>
-      <defs>
-        <clipPath id={clip}>
-          <rect width={SIZE} height={SIZE} rx={mark.radius} />
-        </clipPath>
-      </defs>
-      <rect width={SIZE} height={SIZE} rx={mark.radius} fill={palette.base} />
-      {/* Clip sits outside the drift group so the plate edge itself stays put. */}
-      <g clipPath={`url(#${clip})`}>
-        <motion.g style={depth ? { x: depth.x, y: depth.y } : undefined}>
-          <g transform={insetTransform(mark)}>
-            {half}
-            <g transform={halfTransform(mark)}>{half}</g>
-          </g>
-        </motion.g>
-      </g>
+    // Clipped in CSS rather than with a <clipPath id>: a mark renders five times
+    // over, and a generated id is one more thing to keep unique — and to keep
+    // matching between the server and the client, which useId did not.
+    <svg
+      viewBox={`0 0 ${SIZE} ${SIZE}`}
+      className={className}
+      style={{ clipPath: `inset(0 round ${(mark.radius / SIZE) * 100}%)` }}
+      aria-hidden
+    >
+      <rect width={SIZE} height={SIZE} fill={palette.base} />
+      <motion.g style={depth ? { x: depth.x, y: depth.y } : undefined}>
+        <g transform={insetTransform(mark)}>
+          {half}
+          <g transform={halfTransform(mark)}>{half}</g>
+        </g>
+      </motion.g>
     </svg>
   );
 }
@@ -263,7 +311,7 @@ function toSvgString(mark: Mark, palette: Palette, name: string) {
   const tiles = placeTiles(mark, palette);
   const shape = (t: Placed) =>
     mark.stroke
-      ? `<path d="${t.d}" fill="none" stroke="${t.paint}" stroke-width="${CELL * 0.2}" stroke-linecap="round" stroke-linejoin="round"/>`
+      ? `<path d="${t.d}" fill="none" stroke="${t.paint}" stroke-width="${mark.cell * 0.17}" stroke-linecap="round" stroke-linejoin="round"/>`
       : `<path d="${t.d}" fill="${t.paint}" fill-rule="evenodd"/>`;
   const half = tiles.map((t) => `<g transform="${t.transform}">${shape(t)}</g>`).join("");
   const inset = insetTransform(mark);
@@ -294,9 +342,11 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
   const [history, setHistory] = useState<number[]>([]);
   const [copied, setCopied] = useState(false);
   const [spins, setSpins] = useState(0);
-  const [still, setStill] = useState(false);
 
-  useEffect(() => setStill(prefersReducedMotion()), []);
+  // Read on entry rather than on mount: the gallery's reduced-motion toggle
+  // sets its flag from an ancestor effect, and ancestor effects run after the
+  // ones in here — a mount-time read would miss the toggle on the first render.
+  const stillRef = useRef(false);
 
   const style = STYLES.find((s) => s.id === styleId) ?? STYLES[0];
   const palette = PALETTES.find((p) => p.id === paletteId) ?? PALETTES[0];
@@ -312,8 +362,12 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
   const driftX = useSpring(useTransform(px, [0, 1], [3.5, -3.5]), SPRING.follow);
   const driftY = useSpring(useTransform(py, [0, 1], [3.5, -3.5]), SPRING.follow);
 
+  function handleEnter() {
+    stillRef.current = prefersReducedMotion();
+  }
+
   function handleMove(event: React.PointerEvent<HTMLDivElement>) {
-    if (still) return;
+    if (stillRef.current) return;
     const rect = event.currentTarget.getBoundingClientRect();
     px.set((event.clientX - rect.left) / rect.width);
     py.set((event.clientY - rect.top) / rect.height);
@@ -354,7 +408,7 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
               Mark generator
             </h2>
             <p className="mt-0.5 text-xs text-muted-foreground">
-              Geometric tiles on a {COLS}×{ROWS} grid,{" "}
+              Geometric tiles on a {mark.grid}×{mark.grid} grid,{" "}
               {mark.mirror ? "mirrored" : "turned"} into symmetry
             </p>
           </div>
@@ -366,6 +420,7 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
         <div className="grid gap-px bg-border md:grid-cols-[1.1fr_0.9fr]">
           <div className="flex flex-col gap-6 bg-card p-8">
             <div
+              onPointerEnter={handleEnter}
               onPointerMove={handleMove}
               onPointerLeave={recentre}
               className="relative grid flex-1 place-items-center overflow-hidden rounded-xl border border-border bg-muted/20 p-8 text-border"
@@ -554,7 +609,9 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
                       transition={SPRING.default}
                       onClick={() => setSeed(s)}
                       aria-label={`Restore ${NAMES[s % NAMES.length]}`}
-                      className="rounded-lg ring-1 ring-border transition-shadow duration-200 hover:ring-foreground/40"
+                      // No frame: a round plate inside a square ring reads as a
+                      // mistake. The lift and the fade carry the affordance.
+                      className="opacity-70 transition-opacity duration-200 hover:opacity-100"
                     >
                       <MarkArt
                         mark={buildMark(s, style)}

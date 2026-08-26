@@ -87,6 +87,28 @@ function AreaChart() {
               <stop offset="0%" stopColor="var(--chart-1)" stopOpacity="0.4" />
               <stop offset="100%" stopColor="var(--chart-1)" stopOpacity="0.02" />
             </linearGradient>
+
+            {/* The highlight is masked rather than dashed. A dash has hard
+                ends, which is why it read as a block sliding along the line;
+                a gradient mask lets it fade up and away at both ends. */}
+            <linearGradient id="living-sweep" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="0%" stopColor="white" stopOpacity="0" />
+              <stop offset="35%" stopColor="white" stopOpacity="0.7" />
+              <stop offset="50%" stopColor="white" stopOpacity="1" />
+              <stop offset="65%" stopColor="white" stopOpacity="0.7" />
+              <stop offset="100%" stopColor="white" stopOpacity="0" />
+            </linearGradient>
+            <mask id="living-sweep-mask" maskUnits="userSpaceOnUse">
+              <motion.rect
+                y={0}
+                width={W * 0.42}
+                height={H}
+                fill="url(#living-sweep)"
+                initial={{ x: -W * 0.42 }}
+                animate={{ x: W }}
+                transition={{ duration: 4.5, ease: "linear", repeat: Infinity }}
+              />
+            </mask>
           </defs>
 
           <path d={`${d} L ${W} ${H} L 0 ${H} Z`} fill="url(#living-fill)" />
@@ -101,21 +123,27 @@ function AreaChart() {
             opacity={0.45}
           />
 
-          {/* A short bright segment running the length of the line — the same
-              idea as the metal rim, applied to a stroke. */}
-          <motion.path
-            d={d}
-            fill="none"
-            stroke="var(--chart-1)"
-            strokeWidth={2.5}
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            pathLength={1}
-            strokeDasharray="0.12 0.88"
-            initial={{ strokeDashoffset: 1 }}
-            animate={{ strokeDashoffset: -1 }}
-            transition={{ duration: 4, ease: "linear", repeat: Infinity }}
-          />
+          {/* A light travelling the line, softened at both ends by the mask
+              above so it emerges and fades rather than arriving as a block. */}
+          <g mask="url(#living-sweep-mask)">
+            <path
+              d={d}
+              fill="none"
+              stroke="var(--chart-1)"
+              strokeWidth={5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              opacity={0.28}
+            />
+            <path
+              d={d}
+              fill="none"
+              stroke="var(--chart-1)"
+              strokeWidth={2.5}
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </g>
 
           {/* Crosshair, snapped to the nearest point. */}
           {active !== null && (

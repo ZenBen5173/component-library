@@ -298,15 +298,27 @@ export function GenerateButton({
         <div className="gen-txt-wrapper">
           <div className="gen-txt-1">
             {label.split("").map((letter, i) => (
-              <span key={`t1-${i}`} className="gen-btn-letter">
-                {letter === " " ? " " : letter}
+              <span
+                key={`t1-${i}`}
+                className="gen-btn-letter"
+                // Each letter is its own inline-block, and one holding only a
+                // space collapses to zero width — the label runs together.
+                style={letter === " " ? { width: "0.32em" } : undefined}
+              >
+                {letter}
               </span>
             ))}
           </div>
           <div className="gen-txt-2">
             {(activeLabel ?? label).split("").map((letter, i) => (
-              <span key={`t2-${i}`} className="gen-btn-letter">
-                {letter === " " ? " " : letter}
+              <span
+                key={`t2-${i}`}
+                className="gen-btn-letter"
+                // Each letter is its own inline-block, and one holding only a
+                // space collapses to zero width — the label runs together.
+                style={letter === " " ? { width: "0.32em" } : undefined}
+              >
+                {letter}
               </span>
             ))}
           </div>

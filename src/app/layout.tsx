@@ -18,6 +18,9 @@ const instrumentSans = Instrument_Sans({
 export const metadata: Metadata = {
   title: "Component Library",
   description: "A personal library of components, sections and animations.",
+  // One file for both the tab and the top bar — the app-dir `icon` convention
+  // would need a second copy of the same mark.
+  icons: { icon: "/logo.svg" },
 };
 
 export default function RootLayout({

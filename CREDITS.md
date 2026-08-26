@@ -12,6 +12,7 @@ written from scratch. Each gallery entry names its implementation files in a
 | [full-calendar](https://github.com/yassir-jeraidi/full-calendar) | The event calendar — month/week/day/agenda views with drag and resize | MIT |
 | [Animate UI](https://animate-ui.com) | Radix primitives with motion — dialog, sheet, popover, dropdown, tabs, accordion, sidebar, toggle, hover card, progress | MIT + Commons Clause — **redistribution prohibited**, see below |
 | [lucide-animated](https://lucide-animated.com) | The animated nav and toolbar icons — Motion-powered Lucide | MIT |
+| [Paper shaders](https://github.com/paper-design/shaders) | The WebGL surfaces — liquid metal, and the caustic water field | Apache-2.0 (npm dependency, not vendored) |
 | [Radix Colors](https://www.radix-ui.com/colors) | The 12-step colour scales the design system runs on | MIT (npm dependency, not vendored) |
 | [skiper-ui](https://skiper-ui.com) | Smooth input, tooltip, theme toggles, link effects, number displays, menu icons, scroll progress, video player, hover-expand gallery, crowd canvas | **Redistribution prohibited** — see below |
 | [vengenceui](https://www.vengenceui.com) | Heroes, navigation, bento grids, kinetic text, footers, showcases — the largest single source | MIT — © 2025-2026 Ashutoshx7 |

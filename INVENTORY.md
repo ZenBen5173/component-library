@@ -1,6 +1,6 @@
 # Component Inventory
 
-**67 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**68 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -14,7 +14,7 @@
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
 | [Spotlight Card](src/registry/controls/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
 
-## effects (4)
+## effects (5)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -22,6 +22,7 @@
 | [Highlight Grid](src/registry/effects/highlight-grid.tsx) | Grid of labels where a single coloured highlight glides to whichever cell you point at. | cool, grid, highlight, hover, website |
 | [Scroll Dissolve Reveal](src/registry/effects/scroll-dissolve-reveal.tsx) | WebGL shader that dissolves one image into another as you scroll past it. | portfolio, scroll, webgl, shader, image, three |
 | [Solar System](src/registry/effects/solar-system.tsx) | Tech-stack orbit: labelled nodes revolve on concentric rings around a centre logo, pausable on hover. | cool, orbit, tech-stack, animated, showcase, portfolio |
+| [Water Cursor](src/registry/effects/water-cursor.tsx) | A caustic water surface behind the page that shifts under the pointer — glass-like, and it keeps moving after you stop. | cursor, water, glass, webgl, shader, background, ambient, portfolio, must-have |
 
 ## media (1)
 
@@ -71,7 +72,7 @@
 | [Form Validation](src/registry/app/form-validation.tsx) | Real form wiring — schema validation, per-field errors, and a submit button that shows pending state. | form, validation, zod, react-hook-form, app |
 | [Kanban Board](src/registry/app/kanban.tsx) | Drag-and-drop board — cards move between columns with pointer and keyboard, backed by dnd-kit. | kanban, board, drag-drop, dnd-kit, app |
 | [Living Charts](src/registry/app/living-charts.tsx) | Fixed figures that never sit still — a light travelling the line, a drifting gradient under it, bars caught by a sweeping shimmer, and a ring with a rotating sheen. | chart, data, analytics, dashboard, animated, hover, must-have, app |
-| [Logo Generator](src/registry/app/logo-generator.tsx) | Generative brand marks laid out from geometric tiles — pick a style and a palette, press once for a new mark, copy it as SVG. | logo, brand, generative, svg, geometry, icon, app |
+| [Logo Generator](src/registry/app/logo-generator.tsx) | Generative brand marks laid out from geometric tiles — pick a style and a palette, press once for a new mark, then download it as SVG or PNG. | logo, brand, generative, svg, geometry, icon, app |
 | [OTP Input](src/registry/app/otp-input.tsx) | Six-digit code entry — digits animate in as you type, paste fills every box, backspace walks back. | otp, input, auth, verification, form, app |
 | [Pagination](src/registry/app/pagination.tsx) | Page numbers with a highlight that slides between them on a spring — the same shared-layout trick as the tabs. | pagination, navigation, sliding-indicator, app |
 | [Resizable Panels](src/registry/app/resizable-panels.tsx) | Drag-to-resize split panes, nested and persistable — the shell for editors, inspectors and previews. | resizable, split-pane, layout, editor, app |

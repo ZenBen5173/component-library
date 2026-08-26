@@ -2,11 +2,11 @@
 
 /**
  * @name Logo Generator
- * @description Generative brand marks laid out from geometric tiles — pick a style and a palette, press once for a new mark, copy it as SVG.
+ * @description Generative brand marks laid out from geometric tiles — pick a style and a palette, press once for a new mark, then download it as SVG or PNG.
  * @tags logo, brand, generative, svg, geometry, icon, app
  * @height 780
  * @deps motion, lucide-react
- * @note Marks come from a seeded LCG rather than Math.random, so the server and the first client render agree — the seed only moves when you press. Symmetry is an SVG transform rather than mirrored geometry, so the two halves cannot drift apart. Copy SVG serialises from the same tile model the stage renders, so the clipboard gets the settled mark and never a tile caught mid-spring. The pointer tilt checks `prefersReducedMotion()` on hover, not on mount: the gallery sets its flag from an ancestor effect, and those run after the effects in here — worth knowing for any other entry that guards by hand.
+ * @note Marks come from a seeded LCG rather than Math.random, so the server and the first client render agree — the seed only moves when you press. Symmetry is an SVG transform rather than mirrored geometry, so the two halves cannot drift apart. All three handoffs serialise from the same tile model the stage renders, so what you get is the settled mark and never a tile caught mid-spring; the PNG is that SVG through a canvas at 512px, and falls back to the vector if the canvas export is refused. The pointer tilt checks `prefersReducedMotion()` on hover, not on mount: the gallery sets its flag from an ancestor effect, and those run after the effects in here — worth knowing for any other entry that guards by hand.
  */
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -17,7 +17,7 @@ import {
   useTransform,
   type MotionValue,
 } from "motion/react";
-import { Check, Copy, Shuffle } from "lucide-react";
+import { Check, Copy, Download, ImageDown, Shuffle, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SPRING, tween } from "@/lib/motion";
 import { prefersReducedMotion } from "@/lib/reduced-motion";
@@ -326,6 +326,86 @@ function toSvgString(mark: Mark, palette: Palette, name: string) {
   ].join("");
 }
 
+/* --------------------------------------------------------------- handoff */
+
+type Action = "svg" | "png" | "copy";
+
+/** Large enough to drop straight into an app icon or an avatar slot. */
+const PNG_SIZE = 512;
+
+function save(filename: string, blob: Blob) {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = filename;
+  link.click();
+  // Revoking in the same tick cancels the download in some browsers.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+/**
+ * SVG → PNG through a canvas. The mark has no external references, so the
+ * data URL keeps the canvas clean and `toBlob` is allowed to read it back.
+ */
+async function rasterise(svg: string, size: number) {
+  const image = new Image();
+  image.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+  await image.decode();
+
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  canvas.getContext("2d")?.drawImage(image, 0, 0, size, size);
+
+  return new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("canvas produced no blob"))),
+      "image/png",
+    );
+  });
+}
+
+function ActionButton({
+  icon: Icon,
+  label,
+  doneLabel,
+  done,
+  onClick,
+}: {
+  icon: LucideIcon;
+  label: string;
+  doneLabel: string;
+  done: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileHover={{ y: -1 }}
+      whileTap={{ scale: 0.98 }}
+      transition={SPRING.snappy}
+      className="flex items-center justify-center gap-2 rounded-lg border border-border px-3 py-2 text-xs font-medium text-foreground transition-colors duration-200 hover:bg-muted"
+    >
+      <span className="relative grid size-4 place-items-center">
+        <AnimatePresence mode="wait" initial={false}>
+          <motion.span
+            key={done ? "done" : "idle"}
+            initial={{ scale: 0.4, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.4, opacity: 0 }}
+            transition={SPRING.snappy}
+            className="absolute"
+          >
+            {done ? <Check className="size-4 text-emerald-500" /> : <Icon className="size-4" />}
+          </motion.span>
+        </AnimatePresence>
+      </span>
+      {done ? doneLabel : label}
+    </motion.button>
+  );
+}
+
 /* -------------------------------------------------------------- component */
 
 const FIELD = "text-[11px] font-medium uppercase tracking-widest text-muted-foreground";
@@ -340,7 +420,7 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
   const [styleId, setStyleId] = useState(STYLES[0].id);
   const [paletteId, setPaletteId] = useState(PALETTES[0].id);
   const [history, setHistory] = useState<number[]>([]);
-  const [copied, setCopied] = useState(false);
+  const [done, setDone] = useState<Action | null>(null);
   const [spins, setSpins] = useState(0);
 
   // Read on entry rather than on mount: the gallery's reduced-motion toggle
@@ -384,20 +464,38 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
     setSpins((n) => n + 1);
   }
 
+  const svg = () => toSvgString(mark, palette, name);
+  const file = (ext: string) => `${name.toLowerCase()}-mark.${ext}`;
+
+  function downloadSvg() {
+    save(file("svg"), new Blob([svg()], { type: "image/svg+xml" }));
+    setDone("svg");
+  }
+
+  async function downloadPng() {
+    try {
+      save(file("png"), await rasterise(svg(), PNG_SIZE));
+      setDone("png");
+    } catch {
+      // Canvas export can be refused outright; the vector is always there.
+      downloadSvg();
+    }
+  }
+
   async function copy() {
     try {
-      await navigator.clipboard.writeText(toSvgString(mark, palette, name));
-      setCopied(true);
+      await navigator.clipboard.writeText(svg());
+      setDone("copy");
     } catch {
-      setCopied(false);
+      setDone(null);
     }
   }
 
   useEffect(() => {
-    if (!copied) return;
-    const id = setTimeout(() => setCopied(false), 1600);
+    if (!done) return;
+    const id = setTimeout(() => setDone(null), 1600);
     return () => clearTimeout(id);
-  }, [copied]);
+  }, [done]);
 
   return (
     <section className="grid min-h-[780px] place-items-center bg-background p-6">
@@ -528,14 +626,14 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
               </div>
             </div>
 
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2">
               <motion.button
                 type="button"
                 onClick={generate}
                 whileHover={{ y: -1 }}
                 whileTap={{ scale: 0.98 }}
                 transition={SPRING.snappy}
-                className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/90"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground shadow-sm transition-colors duration-200 hover:bg-primary/90"
               >
                 <motion.span
                   animate={{ rotate: spins * 180 }}
@@ -546,34 +644,29 @@ export default function LogoGenerator({ seed: initialSeed = 20260826 }: { seed?:
                 </motion.span>
                 Generate
               </motion.button>
-              <motion.button
-                type="button"
-                onClick={copy}
-                whileHover={{ y: -1 }}
-                whileTap={{ scale: 0.98 }}
-                transition={SPRING.snappy}
-                className="flex items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium text-foreground transition-colors duration-200 hover:bg-muted"
-              >
-                <span className="relative grid size-4 place-items-center">
-                  <AnimatePresence mode="wait" initial={false}>
-                    <motion.span
-                      key={copied ? "done" : "copy"}
-                      initial={{ scale: 0.4, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      exit={{ scale: 0.4, opacity: 0 }}
-                      transition={SPRING.snappy}
-                      className="absolute"
-                    >
-                      {copied ? (
-                        <Check className="size-4 text-emerald-500" />
-                      ) : (
-                        <Copy className="size-4" />
-                      )}
-                    </motion.span>
-                  </AnimatePresence>
-                </span>
-                {copied ? "Copied" : "SVG"}
-              </motion.button>
+              <div className="grid grid-cols-3 gap-2">
+                <ActionButton
+                  icon={Download}
+                  label="SVG"
+                  doneLabel="Saved"
+                  done={done === "svg"}
+                  onClick={downloadSvg}
+                />
+                <ActionButton
+                  icon={ImageDown}
+                  label="PNG"
+                  doneLabel="Saved"
+                  done={done === "png"}
+                  onClick={downloadPng}
+                />
+                <ActionButton
+                  icon={Copy}
+                  label="Copy"
+                  doneLabel="Copied"
+                  done={done === "copy"}
+                  onClick={copy}
+                />
+              </div>
             </div>
 
             <div>

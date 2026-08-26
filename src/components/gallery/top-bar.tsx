@@ -33,9 +33,9 @@ export function TopBar({
     <>
       <header className="flex h-14 shrink-0 items-center gap-4 border-b border-g-line bg-g-surface px-4">
         <Link href="/" className="flex shrink-0 items-center gap-2">
-          <span className="grid size-6 place-items-center rounded-md bg-g-brand text-[11px] font-bold text-white">
-            C
-          </span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/logo.svg" alt="" className="size-6 shrink-0" />
+
           <span className="font-display text-sm font-semibold tracking-tight">
             Component Library
           </span>

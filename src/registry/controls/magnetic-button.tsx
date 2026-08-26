@@ -9,8 +9,10 @@
  */
 import { useRef } from "react";
 import { motion, useMotionValue, useSpring, useTransform } from "motion/react";
+import { SPRING } from "@/lib/motion";
 
-const SPRING = { stiffness: 220, damping: 18, mass: 0.6 };
+const { stiffness, damping, mass } = SPRING.follow;
+const FOLLOW = { stiffness, damping, mass };
 
 export default function MagneticButton({
   children = "Get started",
@@ -24,8 +26,8 @@ export default function MagneticButton({
   const x = useMotionValue(0);
   const y = useMotionValue(0);
 
-  const sx = useSpring(x, SPRING);
-  const sy = useSpring(y, SPRING);
+  const sx = useSpring(x, FOLLOW);
+  const sy = useSpring(y, FOLLOW);
 
   // The label travels a little further than the button itself — that offset is
   // what reads as "magnetic" rather than "the whole thing moved".

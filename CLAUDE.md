@@ -8,6 +8,7 @@ A personal **component library**, not an application. `src/registry/` is the poi
 npm run dev         # authoring mode, port 3333 — always work here
 npm run typecheck   # run after every change; this catches most breakage
 npm run inventory   # regenerate INVENTORY.md after adding or removing entries
+npm run design      # flag timings and radii that bypass the design scales
 npm run new <category> <slug>
 ```
 
@@ -29,10 +30,12 @@ This matters more than usual here — components get rejected on feel.
 4. `"use client"` unless the component is genuinely a server component (the calendar is one).
 5. Props have defaults so the entry renders with no arguments.
 6. Deterministic sample data — no `Math.random()` or `Date.now()` during render. Both break hydration; this has happened twice.
+7. Timings come from `@/lib/motion` (`DURATION`, `EASE`, `SPRING`, `tween()`), not hand-picked numbers. `npm run design` catches strays. If a value genuinely doesn't fit the scale, add a named preset with a comment saying why — don't inline it. Vendored trees are exempt and stay that way; they get re-fetched, and rewriting their internals only creates merge pain.
 
 ## Before you finish
 
 - `npm run typecheck` — must be clean.
+- `npm run design` — must be clean.
 - Hit every touched preview: `curl -o /dev/null -w '%{http_code}' http://localhost:3333/preview/<cat>/<slug>` — 200 is necessary but not sufficient, since a failed component renders a fallback with a 200.
 - If it animates outside `motion`/`framer-motion` (canvas, GSAP, rAF), guard it with `prefersReducedMotion()` from `@/lib/reduced-motion`, then verify with the preview toolbar's **Reduced motion** toggle.
 

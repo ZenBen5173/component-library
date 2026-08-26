@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { TCalendarView } from "@/components/types";
 import { memo } from "react";
+import { DURATION } from "@/lib/motion";
 
 const tabs = [
   {
@@ -79,7 +80,7 @@ function Views() {
                   className="flex h-8 w-full items-center justify-center cursor-pointer"
                   animate={{ filter: "blur(0px)" }}
                   exit={{ filter: "blur(2px)" }}
-                  transition={{ duration: 0.25, ease: "easeOut" }}
+                  transition={{ duration: DURATION.fast, ease: "easeOut" }}
                 >
                   <Icon />
                   <AnimatePresence initial={false}>
@@ -88,7 +89,7 @@ function Views() {
                         className="font-medium"
                         initial={{ opacity: 0, scaleX: 0.8 }}
                         animate={{ opacity: 1, scaleX: 1 }}
-                        transition={{ duration: 0.25, ease: "easeOut" }}
+                        transition={{ duration: DURATION.fast, ease: "easeOut" }}
                         style={{ originX: 0 }}
                       >
                         {name}

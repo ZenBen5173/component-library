@@ -6,32 +6,51 @@
  * @tags motion, animation, easing, spring, design-system
  * @height 1000
  * @deps motion
- * @note This library is mostly motion, so inconsistent timing shows more here than anywhere else. Hover or click each row to replay it.
+ * @note These are the real values — this page reads them from `src/lib/motion.ts`, which is what components import, so the two cannot drift apart. Run `npm run design` to find timings that bypass them.
  */
 import { useLayoutEffect, useRef, useState } from "react";
 import { motion } from "motion/react";
+import { DURATION, EASE, SPRING } from "@/lib/motion";
 
-const DURATIONS = [
-  ["instant", 0.1, "State flips — checkbox, toggle"],
-  ["fast", 0.2, "Hover, focus, colour change"],
-  ["base", 0.3, "Most transitions"],
-  ["slow", 0.5, "Entrances, layout shifts"],
-  ["deliberate", 0.8, "Hero reveals, scroll effects"],
-];
+const USE = {
+  instant: "State flips — checkbox, toggle",
+  fast: "Hover, focus, colour change",
+  base: "Most transitions",
+  slow: "Entrances, layout shifts",
+  deliberate: "Hero reveals, scroll effects",
+  standard: "Default — moves in and settles",
+  decelerate: "Entering the screen",
+  accelerate: "Leaving the screen",
+  expressive: "The one used across this library",
+  snappy: "Tooltips, small pops",
+  default: "Sliding indicators, tabs",
+  soft: "Progress rails, large panels",
+  bouncy: "Playful — use sparingly",
+} as const;
 
-const EASINGS: [string, [number, number, number, number], string][] = [
-  ["standard", [0.4, 0, 0.2, 1], "Default — moves in and settles"],
-  ["decelerate", [0, 0, 0.2, 1], "Entering the screen"],
-  ["accelerate", [0.4, 0, 1, 1], "Leaving the screen"],
-  ["expressive", [0.16, 1, 0.3, 1], "The one used across this library"],
-];
+const DURATIONS = Object.entries(DURATION).map(([name, d]) => [
+  name,
+  d,
+  USE[name as keyof typeof USE],
+]);
 
-const SPRINGS: [string, { stiffness: number; damping: number }, string][] = [
-  ["snappy", { stiffness: 400, damping: 30 }, "Tooltips, small pops"],
-  ["default", { stiffness: 300, damping: 24 }, "Sliding indicators, tabs"],
-  ["soft", { stiffness: 160, damping: 26 }, "Progress rails, large panels"],
-  ["bouncy", { stiffness: 500, damping: 15 }, "Playful — use sparingly"],
-];
+const EASINGS = Object.entries(EASE).map(
+  ([name, curve]) =>
+    [name, curve, USE[name as keyof typeof USE]] as [
+      string,
+      readonly [number, number, number, number],
+      string,
+    ],
+);
+
+const SPRINGS = Object.entries(SPRING).map(
+  ([name, cfg]) =>
+    [name, cfg, USE[name as keyof typeof USE]] as [
+      string,
+      { readonly stiffness: number; readonly damping: number },
+      string,
+    ],
+);
 
 function Track({
   label,
@@ -129,7 +148,7 @@ export default function MotionTokensDemo() {
                 label={`${name} — cubic-bezier(${ease.join(", ")})`}
                 detail={use}
                 play={play}
-                transition={{ duration: 0.6, ease }}
+                transition={{ duration: DURATION.slow, ease }}
               />
             ))}
           </div>

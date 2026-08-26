@@ -11,6 +11,7 @@
 import { useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import { cn } from "@/lib/utils";
+import { tween } from "@/lib/motion";
 
 const PAGES = ["Work", "Studio", "Journal", "Contact"];
 
@@ -99,7 +100,7 @@ export default function PageTransitionsDemo() {
               initial={active.initial}
               animate={active.animate}
               exit={active.exit}
-              transition={{ duration: 0.42, ease: [0.16, 1, 0.3, 1] }}
+              transition={tween("slow")}
               className="p-8"
             >
               <p className="text-[11px] uppercase tracking-[0.2em] text-muted-foreground">

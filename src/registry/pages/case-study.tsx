@@ -11,6 +11,7 @@
 import { motion } from "motion/react";
 import { ArrowUpRight } from "lucide-react";
 import { Marquee, MarqueeContent, MarqueeFade, MarqueeItem } from "@/components/kibo-ui/marquee";
+import { tween } from "@/lib/motion";
 
 const META = [
   ["Client", "Meridian"],
@@ -50,7 +51,7 @@ function Reveal({ children, delay = 0 }: { children: React.ReactNode; delay?: nu
       initial={{ opacity: 0, y: 20 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-80px" }}
-      transition={{ duration: 0.6, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ ...tween("slow"), delay }}
     >
       {children}
     </motion.div>

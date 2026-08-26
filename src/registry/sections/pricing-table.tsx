@@ -14,6 +14,7 @@ import { Check, Minus } from "lucide-react";
 import { motion } from "motion/react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { SPRING } from "@/lib/motion";
 
 const TIERS = [
   {
@@ -73,7 +74,7 @@ export default function PricingTableDemo() {
                 {annual === option.value && (
                   <motion.span
                     layoutId="billing-pill"
-                    transition={{ type: "spring", stiffness: 320, damping: 28 }}
+                    transition={SPRING.default}
                     className="absolute inset-0 rounded-full bg-foreground"
                   />
                 )}

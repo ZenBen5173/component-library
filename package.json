@@ -9,7 +9,8 @@
     "start": "next start -p 3333",
     "new": "node scripts/new-component.mjs",
     "typecheck": "tsc --noEmit",
-    "inventory": "node scripts/gen-inventory.mjs"
+    "inventory": "node scripts/gen-inventory.mjs",
+    "design": "node scripts/check-design.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",

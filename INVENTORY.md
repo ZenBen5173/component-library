@@ -1,6 +1,58 @@
 # Component Inventory
 
-**57 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**75 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+
+## controls (13)
+
+| Component | What it is | Tags |
+| --- | --- | --- |
+| [Animated Button](src/registry/controls/animated-button.tsx) | Button with a shine sweeping across the label and a matching gradient running the border. | button, shine, hover, spring, versatile |
+| [Animated Menu Icons](src/registry/controls/animated-menu-icons.tsx) | Arrow, hamburger and volume icons that morph on hover and click. The menu icon is the standout. | icon, menu, hamburger, micro-interaction, must-have |
+| [Border Arrow Tooltip](src/registry/controls/border-arrow-tooltip.tsx) | Tooltip whose arrow is cut out of the border itself, so the outline stays continuous. | tooltip, hover, overlay, versatile |
+| [Cursor Card](src/registry/controls/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
+| [Fading Scroll Area](src/registry/controls/fading-scroll-area.tsx) | Scroll container whose top and bottom edges fade out, so cut-off rows read as continuing. | scroll-area, fade, list, mask, versatile |
+| [Link Hover Effects](src/registry/controls/link-hover-effects.tsx) | Five inline-link treatments — sliding underlines, swapped labels and masked reveals. | link, hover, underline, text, versatile |
+| [Magnetic Button](src/registry/controls/magnetic-button.tsx) | Button whose label and body lean toward the cursor, then spring back on exit. | micro-interaction, hover, spring, button |
+| [Scroll Progress Dial](src/registry/controls/scroll-progress-dial.tsx) | Draggable dial that tracks page scroll, with the percentage rolling on a NumberFlow readout. | scroll-progress, indicator, website, versatile |
+| [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
+| [Smooth Input](src/registry/controls/smooth-input.tsx) | Text field whose caret glides between characters instead of jumping, next to a plain styled input. | input, form, caret, versatile |
+| [Spotlight Card](src/registry/controls/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
+| [Theme Toggle Buttons](src/registry/controls/theme-toggle-buttons.tsx) | Five light/dark switch designs — the button itself, with sliders to compare them side by side. | theme-toggle, dark-mode, button, versatile |
+| [Theme Toggle Expand](src/registry/controls/theme-toggle-expand.tsx) | Theme switch where the new theme expands across the page as a circle, rectangle or blur wipe. | theme-toggle, dark-mode, view-transition, versatile |
+
+## effects (5)
+
+| Component | What it is | Tags |
+| --- | --- | --- |
+| [Crowd Canvas](src/registry/effects/crowd-canvas.tsx) | Canvas full of little characters that stroll across the footer, sampled from a sprite sheet. | portfolio, canvas, crowd, playful, cool |
+| [Custom Cursor](src/registry/effects/custom-cursor.tsx) | A dot that tracks the pointer with a ring trailing on a spring, swelling over anything clickable. Plus labelled presence cursors for multiplayer. | cursor, portfolio, micro-interaction, hover, must-have |
+| [Highlight Grid](src/registry/effects/highlight-grid.tsx) | Grid of labels where a single coloured highlight glides to whichever cell you point at. | cool, grid, highlight, hover, website |
+| [Scroll Dissolve Reveal](src/registry/effects/scroll-dissolve-reveal.tsx) | WebGL shader that dissolves one image into another as you scroll past it. | portfolio, scroll, webgl, shader, image, three |
+| [Solar System](src/registry/effects/solar-system.tsx) | Tech-stack orbit: labelled nodes revolve on concentric rings around a centre logo, pausable on hover. | cool, orbit, tech-stack, animated, showcase, portfolio |
+
+## media (2)
+
+| Component | What it is | Tags |
+| --- | --- | --- |
+| [Music Player](src/registry/media/music-player.tsx) | Floating player with artwork, a decorative equalizer, seekable progress and a collapsed pill mode. | player, audio, widget, floating, cool |
+| [Video Player](src/registry/media/video-player.tsx) | Media-chrome player with a mix-blend control bar that sits over the footage rather than below it. | video, player, media, controls, versatile |
+
+## pages (2)
+
+| Component | What it is | Tags |
+| --- | --- | --- |
+| [Article](src/registry/pages/article.tsx) | Long-form reading layout — headings, lists, quotes, code and captions, with the measure capped for readability. | typography, prose, article, blog, case-study, website |
+| [Case Study](src/registry/pages/case-study.tsx) | The page a project index links to — sticky meta rail, alternating image and text, pull quote, results, and next-project navigation. | case-study, portfolio, project, layout, must-have |
+
+## showcase (5)
+
+| Component | What it is | Tags |
+| --- | --- | --- |
+| [Books Showcase](src/registry/showcase/books-showcase.tsx) | 3D bookshelf — books tilt, open and reveal a detail panel. Works for any collectible catalogue, not just books. | cool, showcase, 3d, carousel, books |
+| [Hover Expand Gallery](src/registry/showcase/hover-expand-gallery.tsx) | Row of thin image slats; the one under the cursor expands into a full panel. | portfolio, gallery, hover, expand, images |
+| [Image Reveal List](src/registry/showcase/image-reveal-list.tsx) | Numbered index list where hovering a row slides its image in alongside. Great for project indexes. | versatile, list, hover, image-reveal, portfolio |
+| [Staggered Grid](src/registry/showcase/staggered-grid.tsx) | Scroll-driven gallery: columns drift at different speeds, then converge into a bento layout. | portfolio, grid, scroll, gsap, gallery |
+| [Verse Cards](src/registry/showcase/verse-cards.tsx) | Nav tile that opens into a stacked card deck; click the front card to flick it away. | versatile, cards, deck, stack, interactive, portfolio |
 
 ## Design System (5)
 
@@ -43,43 +95,31 @@
 | [Aurora Hero](src/registry/heroes/aurora-hero.tsx) | Full-bleed aurora gradient with a glass-displacement title and a background-mode switch. | portfolio, hero, gradient, glass, animated |
 | [Perspective Grid](src/registry/heroes/perspective-grid.tsx) | Tilted 3D tile grid that fades out at the edges; tiles light up under the cursor and fade back over 1.5s. | portfolio, hero, 3d, grid, background, cool |
 
-## Navigation (5)
+## Navigation (6)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
 | [Awwwards Nav](src/registry/navigation/awwwards-nav.tsx) | Floating pill nav that expands upward into a columned menu panel. | navigation, navbar, expandable, awwwards, portfolio |
 | [Glass Dock](src/registry/navigation/glass-dock.tsx) | macOS-style dock: icons scale and lift as the cursor sweeps past, on a frosted glass bar. | navigation, dock, glass, hover, macos |
 | [Mega Menu Navbar](src/registry/navigation/mega-menu-navbar.tsx) | Sticky top bar whose panels expand into a mega menu — a promo sidebar card plus grouped link columns. | navigation, navbar, mega-menu, saas, website |
+| [Page Transitions](src/registry/navigation/page-transitions.tsx) | Four ways one page can hand over to the next — fade, slide, a wipe curtain, and a masked reveal. | page-transition, navigation, portfolio, motion, must-have |
 | [Search Modal](src/registry/navigation/search-modal.tsx) | Collapsed search bar that expands into a full command palette — filter tags, grouped results, ⌘K. | navigation, search, modal, command-palette, hotkey |
 | [Spotlight Navbar](src/registry/navigation/spotlight-navbar.tsx) | Nav links lit by a sliding spotlight that tracks the hovered item and settles on the active one. | navigation, navbar, spotlight, hover |
 
-## Sections (13)
+## Sections (10)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
 | [Agent Bento Grid](src/registry/sections/agent-bento-grid.tsx) | Five-panel bento of self-animating feature cards. A drop-in replacement for a plain feature grid. | versatile, bento, grid, cards, feature, website |
 | [Animated Footer](src/registry/sections/animated-footer.tsx) | Footer whose side images are sampled into interactive ASCII art, with parallax and oversized wordmark. | portfolio, footer, ascii, canvas, parallax |
-| [Books Showcase](src/registry/sections/books-showcase.tsx) | 3D bookshelf — books tilt, open and reveal a detail panel. Works for any collectible catalogue, not just books. | cool, showcase, 3d, carousel, books |
 | [Expandable Bento Grid](src/registry/sections/expandable-bento-grid.tsx) | Bento tiles that expand in place into a full detail panel when clicked. | bento, grid, expandable, cards, versatile |
 | [FAQ Accordion](src/registry/sections/faq-accordion.tsx) | Disclosure list with a smooth height transition — the standard bottom-of-page FAQ block. | website, faq, accordion, disclosure, versatile |
-| [Highlight Grid](src/registry/sections/highlight-grid.tsx) | Grid of labels where a single coloured highlight glides to whichever cell you point at. | cool, grid, highlight, hover, website |
-| [Image Reveal List](src/registry/sections/image-reveal-list.tsx) | Numbered index list where hovering a row slides its image in alongside. Great for project indexes. | versatile, list, hover, image-reveal, portfolio |
+| [Logo Marquee](src/registry/sections/logo-marquee.tsx) | Continuously scrolling strip of client logos, pausing on hover, with the edges faded out. | marquee, logos, social-proof, portfolio, website, ticker |
+| [Pricing Table](src/registry/sections/pricing-table.tsx) | Three tiers with a monthly/annual toggle, prices that roll rather than swap, and one plan marked out. | pricing, saas, website, toggle, marketing |
 | [Research Bento Grid](src/registry/sections/research-bento-grid.tsx) | Three-panel bento: rotating brand showcase, animated invoice/pricing tile and a pause-anytime tile. | portfolio, website, bento, grid, pricing, saas |
-| [Solar System](src/registry/sections/solar-system.tsx) | Tech-stack orbit: labelled nodes revolve on concentric rings around a centre logo, pausable on hover. | cool, orbit, tech-stack, animated, showcase, portfolio |
-| [Staggered Grid](src/registry/sections/staggered-grid.tsx) | Scroll-driven gallery: columns drift at different speeds, then converge into a bento layout. | portfolio, grid, scroll, gsap, gallery |
 | [Team Reveal Grid](src/registry/sections/team-reveal-grid.tsx) | Team roster where hovering a name reveals that person's portrait, auto-cycling while idle. | website, team, grid, reveal, about |
-| [Verse Cards](src/registry/sections/verse-cards.tsx) | Nav tile that opens into a stacked card deck; click the front card to flick it away. | versatile, cards, deck, stack, interactive, portfolio |
+| [Testimonials](src/registry/sections/testimonials.tsx) | Two shapes — a scrolling wall that never stops, and a static three-up for when the words need reading. | testimonials, social-proof, marquee, website, portfolio |
 | [Why Us Bento](src/registry/sections/why-us-bento.tsx) | Bento grid of value props — animated avatar row, globe, feature tiles. A "why choose us" section. | versatile, bento, grid, website, feature, marketing |
-
-## UI (5)
-
-| Component | What it is | Tags |
-| --- | --- | --- |
-| [Animated Button](src/registry/ui/animated-button.tsx) | Button with a shine sweeping across the label and a matching gradient running the border. | button, shine, hover, spring, versatile |
-| [Cursor Card](src/registry/ui/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
-| [Music Player](src/registry/ui/music-player.tsx) | Floating player with artwork, a decorative equalizer, seekable progress and a collapsed pill mode. | player, audio, widget, floating, cool |
-| [Shared Tooltip Avatars](src/registry/ui/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
-| [Spotlight Card](src/registry/ui/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
 
 ## Text & Numbers (6)
 
@@ -92,15 +132,8 @@
 | [Stagger Text](src/registry/text/stagger-text.tsx) | Copy that reveals word by word (or letter by letter) as it scrolls into view. | portfolio, website, text, stagger, reveal, scroll |
 | [Stats Counter](src/registry/text/stats-counter.tsx) | Number that counts up to its target, with prefix/suffix and decimal support. For stat strips. | number, counter, stats, scroll, website |
 
-## Animations (2)
-
-| Component | What it is | Tags |
-| --- | --- | --- |
-| [Magnetic Button](src/registry/animations/magnetic-button.tsx) | Button whose label and body lean toward the cursor, then spring back on exit. | micro-interaction, hover, spring, button |
-| [Scroll Dissolve Reveal](src/registry/animations/scroll-dissolve-reveal.tsx) | WebGL shader that dissolves one image into another as you scroll past it. | portfolio, scroll, webgl, shader, image, three |
-
 ---
 
-21 further components exist in the author's working copy but are not
+10 further components exist in the author's working copy but are not
 redistributable, so they are not part of this repository. See
 [CREDITS.md](CREDITS.md).

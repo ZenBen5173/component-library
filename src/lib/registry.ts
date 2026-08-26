@@ -15,42 +15,57 @@ export const CATEGORIES: Record<
   design: {
     label: "Design System",
     blurb: "Colour, type, spacing, motion and layout foundations.",
-    order: 1,
+    order: 5,
   },
   app: {
     label: "App UI",
     blurb: "Forms, overlays, tables and feedback — the logged-in surface.",
-    order: 5,
+    order: 10,
   },
   heroes: {
     label: "Heroes",
     blurb: "Above-the-fold landing sections.",
-    order: 10,
+    order: 20,
   },
   navigation: {
     label: "Navigation",
     blurb: "Navbars, docks, mega menus and command palettes.",
-    order: 15,
+    order: 25,
+  },
+  pages: {
+    label: "Pages",
+    blurb: "Whole-page layouts you'd build a route from.",
+    order: 28,
   },
   sections: {
     label: "Sections",
-    blurb: "Bento grids, showcases, teams, FAQs, footers.",
-    order: 20,
-  },
-  ui: {
-    label: "UI",
-    blurb: "Buttons, cards, avatars and other primitives.",
+    blurb: "Full-width page blocks — bento grids, FAQs, teams, footers.",
     order: 30,
+  },
+  showcase: {
+    label: "Showcase",
+    blurb: "Ways to display work, images and collections.",
+    order: 35,
   },
   text: {
     label: "Text & Numbers",
     blurb: "Kinetic type, counters and reveal effects.",
-    order: 35,
-  },
-  animations: {
-    label: "Animations",
-    blurb: "Micro-interactions and motion primitives.",
     order: 40,
+  },
+  controls: {
+    label: "Controls",
+    blurb: "Buttons, cards, tooltips, toggles and other small primitives.",
+    order: 50,
+  },
+  media: {
+    label: "Media",
+    blurb: "Audio and video players.",
+    order: 55,
+  },
+  effects: {
+    label: "Effects",
+    blurb: "Decorative and background — canvas, WebGL, cursor-reactive fields.",
+    order: 60,
   },
 };
 

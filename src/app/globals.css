@@ -1,4 +1,30 @@
 @import "tailwindcss";
+
+/* Tailwind v4 skips anything in .gitignore when it auto-detects sources, and
+   will not descend into an ignored path from an outer glob either. Several
+   components are gitignored for licensing (they may be used, but not
+   redistributed) — without these lines their utilities are never generated and
+   they render completely unstyled, which is silent and easy to miss. An
+   @source aimed directly at an ignored path is honoured. Regenerate this block
+   when .gitignore changes. */
+@source "../components/animate-ui/**/*.{ts,tsx}";
+@source "../components/ui/skiper-ui/**/*.{ts,tsx}";
+@source "../hooks/use-auto-height.tsx";
+@source "../hooks/use-controlled-state.tsx";
+@source "../hooks/use-data-state.tsx";
+@source "../lib/get-strict-context.tsx";
+@source "../registry/app/alerts-and-confirms.tsx";
+@source "../registry/app/context-menu-and-hover-card.tsx";
+@source "../registry/app/feedback.tsx";
+@source "../registry/app/form-controls.tsx";
+@source "../registry/app/overlays.tsx";
+@source "../registry/app/sidebar-with-tree.tsx";
+@source "../registry/app/sidebar.tsx";
+@source "../registry/app/tabs-and-accordion.tsx";
+@source "../registry/app/toggles-and-disclosure.tsx";
+@source "../registry/pages/app-shell.tsx";
+@source "../registry/text/scroll-number-showcase.tsx";
+
 @plugin "@tailwindcss/typography";
 
 /* next-themes writes class="dark" on <html>, so wire Tailwind v4 to that. */

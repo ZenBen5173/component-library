@@ -134,6 +134,6 @@
 
 ---
 
-10 further components exist in the author's working copy but are not
+11 further components exist in the author's working copy but are not
 redistributable, so they are not part of this repository. See
 [CREDITS.md](CREDITS.md).

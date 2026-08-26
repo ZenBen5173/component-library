@@ -35,6 +35,7 @@ src/lib/get-strict-context.tsx
 src/registry/app/overlays.tsx
 src/registry/app/sidebar.tsx
 src/registry/app/sidebar-with-tree.tsx
+src/registry/pages/app-shell.tsx
 src/registry/app/tabs-and-accordion.tsx
 src/registry/app/toggles-and-disclosure.tsx
 src/registry/app/alerts-and-confirms.tsx

@@ -11,9 +11,10 @@ install. Nothing imports from it at runtime.
 2. Or browse it: `npm run dev` in this folder, then http://localhost:3333.
    The gallery is the better option when the choice is visual.
 
-Categories: `design` (foundations) · `app` (logged-in UI) · `heroes` ·
-`navigation` · `sections` (marketing) · `ui` (primitives) · `text` (kinetic
-type) · `animations`.
+Categories: `design` (colour, type, motion and spacing foundations) · `app`
+(logged-in UI) · `heroes` · `navigation` · `pages` (whole-page layouts) ·
+`sections` (marketing blocks) · `showcase` · `text` (kinetic type) ·
+`controls` (buttons, cards, tooltips) · `media` · `effects` (canvas, WebGL).
 
 ## Taking one
 

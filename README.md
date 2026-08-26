@@ -1,6 +1,6 @@
 # Component Library
 
-A personal library of UI components, browsed through a local gallery. **78 components** across app UI, marketing sections, heroes, navigation, kinetic text and a design-system reference.
+A personal library of UI components, browsed through a local gallery. **75 components** across app UI, marketing sections, heroes, navigation, kinetic text and a design-system reference.
 
 This is **not an app** — it's the shelf you pull from when you start one.
 
@@ -30,7 +30,7 @@ Implementations live in sub-folders by origin — `ui/` (shadcn + vengenceui), `
 
 ### Categories
 
-`design` · `app` · `heroes` · `navigation` · `sections` · `ui` · `text` · `animations`
+`design` · `app` · `heroes` · `navigation` · `pages` · `sections` · `showcase` · `text` · `controls` · `media` · `effects`
 
 Any new folder under `src/registry/` becomes a category. Give it a label and sort order in `CATEGORIES` in [src/lib/registry.ts](src/lib/registry.ts).
 

@@ -18,11 +18,11 @@ export default function WaterRipplesDemo() {
       <div className="relative grid min-h-[620px] place-items-center px-8">
         <div className="max-w-md rounded-xl bg-background/40 p-6 text-center backdrop-blur-sm">
           <h2 className="font-display text-3xl font-semibold tracking-tight">
-            Drag across the grid
+            Drag across the surface
           </h2>
           <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-            Watch the lines behind the ripples bend and settle. Nothing is drawn
-            on top — the grid itself is being distorted.
+            Rings spread from the pointer at half pace and settle. The bending is
+            deliberately slight — the highlight does most of the work.
           </p>
         </div>
       </div>

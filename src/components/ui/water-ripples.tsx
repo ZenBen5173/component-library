@@ -113,38 +113,36 @@ function program(gl: WebGL2RenderingContext, frag: string) {
   return p;
 }
 
-/** A backdrop with enough structure that the bending is obvious. */
+/**
+ * A plain backdrop.
+ *
+ * Kept to a soft gradient rather than a grid: over a busy pattern the
+ * displacement is loud and obvious, which is the wrong read. On a near-flat
+ * ground the surface shows mostly through its highlight, and the bending is
+ * something you notice rather than something you are shown.
+ */
 function backdrop(size = 512) {
   const c = document.createElement("canvas");
   c.width = c.height = size;
   const g = c.getContext("2d")!;
-  const grad = g.createLinearGradient(0, 0, size, size);
-  grad.addColorStop(0, "#0b1020");
-  grad.addColorStop(0.5, "#131a35");
-  grad.addColorStop(1, "#0a0d18");
+
+  const grad = g.createLinearGradient(0, 0, size * 0.6, size);
+  grad.addColorStop(0, "#0e1018");
+  grad.addColorStop(0.55, "#12141d");
+  grad.addColorStop(1, "#0b0d14");
   g.fillStyle = grad;
   g.fillRect(0, 0, size, size);
 
-  g.strokeStyle = "rgba(139,147,255,0.22)";
-  g.lineWidth = 1;
-  for (let i = 0; i <= size; i += 32) {
-    g.beginPath();
-    g.moveTo(i, 0);
-    g.lineTo(i, size);
-    g.moveTo(0, i);
-    g.lineTo(size, i);
-    g.stroke();
-  }
+  // A single soft bloom, so there is some tone for the surface to move.
+  const glow = g.createRadialGradient(
+    size * 0.36, size * 0.32, 0,
+    size * 0.36, size * 0.32, size * 0.62,
+  );
+  glow.addColorStop(0, "rgba(139,147,255,0.16)");
+  glow.addColorStop(1, "rgba(139,147,255,0)");
+  g.fillStyle = glow;
+  g.fillRect(0, 0, size, size);
 
-  g.fillStyle = "rgba(139,147,255,0.5)";
-  for (let i = 0; i < 40; i++) {
-    // Deterministic scatter — no Math.random, so runs look identical.
-    const x = ((i * 97) % size) + 8;
-    const y = ((i * 173) % size) + 8;
-    g.beginPath();
-    g.arc(x % size, y % size, 2.5, 0, Math.PI * 2);
-    g.fill();
-  }
   return c;
 }
 
@@ -155,15 +153,20 @@ export function WaterRipples({
   resolution = 256,
   /**
    * How far the surface bends what is behind it, as a multiplier on the
-   * surface slope. The slope across a 256 grid is on the order of 0.01, so
-   * anything below about 1 moves the lookup by a pixel or two and reads as
-   * nothing at all.
+   * surface slope. Small on purpose — over a plain ground the highlight does
+   * most of the work and heavy displacement looks like a fairground mirror.
+   * Push it toward 3 only if the backdrop is busy enough to carry it.
    */
-  refraction = 3.2,
+  refraction = 0.9,
   /** Brightness of the light catching the surface. */
   specular = 0.5,
   /** Closer to 1 rings for longer. */
-  damping = 0.992,
+  damping = 0.994,
+  /**
+   * Propagation rate. The wave advances one cell per simulation step, so this
+   * is how many steps a frame is worth — 0.5 spreads the rings at half pace.
+   */
+  speed = 0.5,
 }: {
   className?: string;
   src?: string;
@@ -171,6 +174,7 @@ export function WaterRipples({
   refraction?: number;
   specular?: number;
   damping?: number;
+  speed?: number;
 }) {
   const ref = useRef<HTMLCanvasElement>(null);
 
@@ -271,6 +275,7 @@ export function WaterRipples({
     ro.observe(canvas);
 
     let raf = 0;
+    let budget = 0;
     const frame = () => {
       gl.bindBuffer(gl.ARRAY_BUFFER, quad);
       gl.enableVertexAttribArray(0);
@@ -292,16 +297,21 @@ export function WaterRipples({
         [a, b] = [b, a];
       }
 
-      // One step of the wave equation.
-      gl.bindFramebuffer(gl.FRAMEBUFFER, b.fbo);
-      gl.useProgram(simP);
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, a.tex);
-      gl.uniform1i(gl.getUniformLocation(simP, "u_state"), 0);
-      gl.uniform2f(gl.getUniformLocation(simP, "u_texel"), texel, texel);
-      gl.uniform1f(gl.getUniformLocation(simP, "u_damping"), damping);
-      gl.drawArrays(gl.TRIANGLES, 0, 3);
-      [a, b] = [b, a];
+      // Steps of the wave equation, budgeted so the rings can spread slower
+      // than the frame rate rather than always one cell per frame.
+      budget += speed;
+      while (budget >= 1) {
+        budget -= 1;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, b.fbo);
+        gl.useProgram(simP);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, a.tex);
+        gl.uniform1i(gl.getUniformLocation(simP, "u_state"), 0);
+        gl.uniform2f(gl.getUniformLocation(simP, "u_texel"), texel, texel);
+        gl.uniform1f(gl.getUniformLocation(simP, "u_damping"), damping);
+        gl.drawArrays(gl.TRIANGLES, 0, 3);
+        [a, b] = [b, a];
+      }
 
       // Draw the image through the surface.
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -328,7 +338,7 @@ export function WaterRipples({
       window.removeEventListener("pointermove", onMove);
       ro.disconnect();
     };
-  }, [resolution, refraction, specular, damping, src]);
+  }, [resolution, refraction, specular, damping, speed, src]);
 
   return (
     <canvas ref={ref} aria-hidden className={cn("block size-full", className)} />

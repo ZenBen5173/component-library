@@ -21,11 +21,15 @@ type Ripple = { x: number; y: number; born: number };
 export function RippleField({
   className,
   /** Milliseconds a ripple takes to fade out. */
-  life = 2600,
+  life = 1500,
   /** Furthest radius a ripple reaches, in px. */
-  spread = 260,
-  /** Pointer travel needed before another ripple is dropped, in px. */
-  spacing = 34,
+  spread = 150,
+  /**
+   * Pointer travel needed before another ripple is dropped, in px. Large on
+   * purpose: at 34px a normal sweep of the mouse left two dozen rings
+   * overlapping at once and the whole thing turned into a spirograph.
+   */
+  spacing = 120,
   color = "139, 147, 255",
 }: {
   className?: string;
@@ -70,7 +74,8 @@ export function RippleField({
       if (prev && Math.hypot(x - prev.x, y - prev.y) < spacing) return;
       last.current = { x, y };
       ripples.current.push({ x, y, born: performance.now() });
-      if (ripples.current.length > 24) ripples.current.shift();
+      // A handful at most. Water settles; it does not accumulate.
+      if (ripples.current.length > 5) ripples.current.shift();
     };
 
     let raf = 0;
@@ -91,8 +96,8 @@ export function RippleField({
 
         // Two rings a little apart read as a crest and its trough.
         for (const [scale, weight] of [
-          [1, 0.55],
-          [0.82, 0.28],
+          [1, 0.4],
+          [0.86, 0.16],
         ] as const) {
           const rr = radius * scale;
           if (rr < 1) continue;
@@ -101,7 +106,7 @@ export function RippleField({
           grad.addColorStop(0.7, `rgba(${color}, ${fade * weight})`);
           grad.addColorStop(1, `rgba(${color}, 0)`);
           ctx.strokeStyle = grad;
-          ctx.lineWidth = 10 * (1 - t) + 1;
+          ctx.lineWidth = 5 * (1 - t) + 0.75;
           ctx.beginPath();
           ctx.arc(r.x, r.y, rr, 0, Math.PI * 2);
           ctx.stroke();

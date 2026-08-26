@@ -21,12 +21,12 @@ export function UserSelect() {
         <SelectItem value="all">
           <AvatarGroup className="mx-2 flex items-center" max={3}>
             {users.map((user) => (
-              <Avatar key={user.id} className="size-6 text-xxs">
+              <Avatar key={user.id} className="size-6 text-[10px]">
                 <AvatarImage
                   src={user.picturePath ?? undefined}
                   alt={user.name}
                 />
-                <AvatarFallback className="text-xxs">
+                <AvatarFallback className="text-[10px]">
                   {user.name[0]}
                 </AvatarFallback>
               </Avatar>
@@ -47,7 +47,7 @@ export function UserSelect() {
                   src={user.picturePath ?? undefined}
                   alt={user.name}
                 />
-                <AvatarFallback className="text-xxs">
+                <AvatarFallback className="text-[10px]">
                   {user.name[0]}
                 </AvatarFallback>
               </Avatar>

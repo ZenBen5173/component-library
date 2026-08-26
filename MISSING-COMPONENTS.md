@@ -1,6 +1,6 @@
 # Components not in this repository
 
-Twenty-one components are absent because their licences permit use but not
+Twenty-two components are absent because their licences permit use but not
 republication (see [CREDITS.md](CREDITS.md)). **You can still install them** —
 straight from the people who made them, which is what their licences are for.
 

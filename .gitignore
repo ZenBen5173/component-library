@@ -36,6 +36,17 @@ src/registry/app/overlays.tsx
 src/registry/app/sidebar.tsx
 src/registry/app/sidebar-with-tree.tsx
 src/registry/pages/app-shell.tsx
+src/registry/controls/animated-menu-icons.tsx
+src/registry/controls/border-arrow-tooltip.tsx
+src/registry/controls/fading-scroll-area.tsx
+src/registry/controls/link-hover-effects.tsx
+src/registry/controls/scroll-progress-dial.tsx
+src/registry/controls/smooth-input.tsx
+src/registry/controls/theme-toggle-buttons.tsx
+src/registry/controls/theme-toggle-expand.tsx
+src/registry/effects/crowd-canvas.tsx
+src/registry/media/video-player.tsx
+src/registry/showcase/hover-expand-gallery.tsx
 src/registry/app/tabs-and-accordion.tsx
 src/registry/app/toggles-and-disclosure.tsx
 src/registry/app/alerts-and-confirms.tsx

@@ -2,7 +2,7 @@
 
 import { useRef, useEffect, useState, useCallback, useId } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronsUpDown, MoreHorizontal, Eye, EyeOff } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Columns3, Eye, EyeOff } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -574,16 +574,24 @@ export function ColumnHeaderRow({
             );
           })}
 
-          {/* ··· column visibility toggle */}
-          <div className="shrink-0 px-2 py-2.5 flex items-center">
+          {/* Column visibility. Sits flush at the end of the band rather than
+              in a padded cell, which made it read as one more column, and
+              carries a columns icon — "..." named nothing. */}
+          <div className="ml-auto flex shrink-0 items-center pl-1 pr-1.5">
             <button
               ref={colMenuBtnRef}
               type="button"
               onClick={() => setColMenuOpen(!colMenuOpen)}
-              className="p-1 rounded text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)] transition-colors"
+              className={cn(
+                "grid size-7 place-items-center rounded-md transition-colors",
+                colMenuOpen
+                  ? "bg-[var(--card)] text-[var(--foreground)]"
+                  : "text-[var(--muted-foreground)] hover:bg-[var(--card)] hover:text-[var(--foreground)]",
+              )}
               title="Show/hide columns"
+              aria-label="Show or hide columns"
             >
-              <MoreHorizontal className="h-4 w-4" />
+              <Columns3 className="h-3.5 w-3.5" />
             </button>
             {colMenuOpen && (
               <ColumnVisibilityMenu

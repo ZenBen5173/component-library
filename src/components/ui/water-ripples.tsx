@@ -122,6 +122,23 @@ function program(gl: WebGL2RenderingContext, frag: string) {
   return p;
 }
 
+type Palette = { from: string; mid: string; to: string; glow: string };
+
+const PALETTES: Record<"dark" | "light", Palette> = {
+  dark: {
+    from: "#0e1018",
+    mid: "#12141d",
+    to: "#0b0d14",
+    glow: "rgba(139,147,255,0.16)",
+  },
+  light: {
+    from: "#f4f5fa",
+    mid: "#eceef7",
+    to: "#f7f8fc",
+    glow: "rgba(99,102,241,0.14)",
+  },
+};
+
 /**
  * A plain backdrop.
  *
@@ -129,26 +146,28 @@ function program(gl: WebGL2RenderingContext, frag: string) {
  * displacement is loud and obvious, which is the wrong read. On a near-flat
  * ground the surface shows mostly through its highlight, and the bending is
  * something you notice rather than something you are shown.
+ *
+ * The canvas is opaque, so it becomes the page background wherever it sits —
+ * which is why it has to follow the theme rather than always being dark.
  */
-function backdrop(size = 512) {
+function backdrop(p: Palette, size = 512) {
   const c = document.createElement("canvas");
   c.width = c.height = size;
   const g = c.getContext("2d")!;
 
   const grad = g.createLinearGradient(0, 0, size * 0.6, size);
-  grad.addColorStop(0, "#0e1018");
-  grad.addColorStop(0.55, "#12141d");
-  grad.addColorStop(1, "#0b0d14");
+  grad.addColorStop(0, p.from);
+  grad.addColorStop(0.55, p.mid);
+  grad.addColorStop(1, p.to);
   g.fillStyle = grad;
   g.fillRect(0, 0, size, size);
 
-  // A single soft bloom, so there is some tone for the surface to move.
   const glow = g.createRadialGradient(
     size * 0.36, size * 0.32, 0,
     size * 0.36, size * 0.32, size * 0.62,
   );
-  glow.addColorStop(0, "rgba(139,147,255,0.16)");
-  glow.addColorStop(1, "rgba(139,147,255,0)");
+  glow.addColorStop(0, p.glow);
+  glow.addColorStop(1, p.glow.replace(/[0-9.]+\)$/, "0)"));
   g.fillStyle = glow;
   g.fillRect(0, 0, size, size);
 
@@ -249,7 +268,25 @@ export function WaterRipples({
       gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     };
 
-    uploadImage(backdrop());
+    const themeNow = (): "dark" | "light" =>
+      document.documentElement.classList.contains("dark") ? "dark" : "light";
+
+    let theme = themeNow();
+    uploadImage(backdrop(PALETTES[theme]));
+
+    // The gallery toggles a class on <html>; without watching it the canvas
+    // keeps painting a dark page background under a light theme.
+    const themeWatch = new MutationObserver(() => {
+      const next = themeNow();
+      if (next === theme || src) return;
+      theme = next;
+      uploadImage(backdrop(PALETTES[theme]));
+    });
+    themeWatch.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ["class"],
+    });
+
     if (src) {
       const img = new Image();
       img.crossOrigin = "anonymous";
@@ -345,6 +382,7 @@ export function WaterRipples({
       disposed = true;
       cancelAnimationFrame(raf);
       window.removeEventListener("pointermove", onMove);
+      themeWatch.disconnect();
       ro.disconnect();
     };
   }, [resolution, refraction, specular, damping, speed, src]);

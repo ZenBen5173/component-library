@@ -48,9 +48,16 @@ export function ThemeToggle() {
     // flushSync matters: startViewTransition snapshots the DOM when its
     // callback resolves, and React would otherwise batch setTheme to a later
     // tick — the snapshot would catch the old theme and nothing would wipe.
+    // Flags the scoped override in globals.css on for the length of this
+    // transition only, so other toggles' CSS keyframes are left alone.
+    document.documentElement.dataset.vtWipe = "";
+
     const transition = document.startViewTransition(() =>
       flushSync(() => setTheme(next)),
     );
+    transition.finished.finally(() => {
+      delete document.documentElement.dataset.vtWipe;
+    });
     // A skipped transition rejects `ready` — the browser skips it whenever the
     // document is hidden. The theme has already changed by then, so there is
     // nothing to recover, but an uncaught rejection would surface as an error.

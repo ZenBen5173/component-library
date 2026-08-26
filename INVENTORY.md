@@ -1,6 +1,6 @@
 # Component Inventory
 
-**69 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**70 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -31,10 +31,11 @@
 | --- | --- | --- |
 | [Music Player](src/registry/media/music-player.tsx) | Floating player with artwork, a decorative equalizer, seekable progress and a collapsed pill mode. | player, audio, widget, floating, cool |
 
-## pages (2)
+## pages (3)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
+| [App Shell](src/registry/pages/app-shell.tsx) | A task tracker as a real app — the same tasks seen four ways (list, board, table, calendar) inside a rail, sticky bar and expanding capture field. | layout, shell, app, dashboard, sidebar, must-have |
 | [Article](src/registry/pages/article.tsx) | Long-form reading layout — headings, lists, quotes, code and captions, with the measure capped for readability. | typography, prose, article, blog, case-study, website |
 | [Case Study](src/registry/pages/case-study.tsx) | The page a project index links to — sticky meta rail, alternating image and text, pull quote, results, and next-project navigation. | case-study, portfolio, project, layout, must-have |
 
@@ -128,6 +129,6 @@
 
 ---
 
-22 further components exist in the author's working copy but are not
+21 further components exist in the author's working copy but are not
 redistributable, so they are not part of this repository. See
 [CREDITS.md](CREDITS.md).

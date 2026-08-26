@@ -35,7 +35,6 @@ src/lib/get-strict-context.tsx
 src/registry/app/overlays.tsx
 src/registry/app/sidebar.tsx
 src/registry/app/sidebar-with-tree.tsx
-src/registry/pages/app-shell.tsx
 src/registry/controls/animated-menu-icons.tsx
 src/registry/controls/border-arrow-tooltip.tsx
 src/registry/controls/fading-scroll-area.tsx

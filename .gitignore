@@ -53,3 +53,6 @@ src/registry/app/alerts-and-confirms.tsx
 src/registry/app/context-menu-and-hover-card.tsx
 src/registry/app/feedback.tsx
 src/registry/app/form-controls.tsx
+
+# Browser-automation artefacts, not part of the library.
+.playwright-mcp/

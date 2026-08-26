@@ -46,7 +46,6 @@ const PATHS = {
   bar: `M0 0H${CELL}V${CELL / 2}H0Z`,
   truchet: `M${CELL / 2} 0A${CELL / 2} ${CELL / 2} 0 0 1 0 ${CELL / 2}M${CELL} ${CELL / 2}A${CELL / 2} ${CELL / 2} 0 0 0 ${CELL / 2} ${CELL}`,
   arc: `M0 ${CELL / 2}A${CELL / 2} ${CELL / 2} 0 0 1 ${CELL} ${CELL / 2}`,
-  cross: `M${CELL / 2} 0V${CELL}M0 ${CELL / 2}H${CELL}`,
   diagonal: `M0 0L${CELL} ${CELL}`,
 } as const;
 
@@ -76,7 +75,7 @@ const STYLES: StyleDef[] = [
     id: "lines",
     label: "Lines",
     stroke: true,
-    pool: ["truchet", "truchet", "truchet", "arc", "arc", "cross", "diagonal", null],
+    pool: ["truchet", "truchet", "truchet", "truchet", "arc", "arc", "diagonal", null, null],
   },
 ];
 
@@ -172,6 +171,15 @@ function halfTransform(mark: Mark) {
     : `rotate(180 ${SIZE / 2} ${SIZE / 2})`;
 }
 
+/**
+ * Filled tiles are meant to run off the plate — that's where the shape comes
+ * from. A stroke cut by the same edge just looks severed, so the line styles
+ * are pulled in far enough for every cap to land inside.
+ */
+function insetTransform(mark: Mark) {
+  return mark.stroke ? `translate(${SIZE * 0.09} ${SIZE * 0.09}) scale(0.82)` : undefined;
+}
+
 /* ----------------------------------------------------------------- render */
 
 function MarkArt({
@@ -241,8 +249,10 @@ function MarkArt({
       {/* Clip sits outside the drift group so the plate edge itself stays put. */}
       <g clipPath={`url(#${clip})`}>
         <motion.g style={depth ? { x: depth.x, y: depth.y } : undefined}>
-          {half}
-          <g transform={halfTransform(mark)}>{half}</g>
+          <g transform={insetTransform(mark)}>
+            {half}
+            <g transform={halfTransform(mark)}>{half}</g>
+          </g>
         </motion.g>
       </g>
     </svg>
@@ -256,12 +266,14 @@ function toSvgString(mark: Mark, palette: Palette, name: string) {
       ? `<path d="${t.d}" fill="none" stroke="${t.paint}" stroke-width="${CELL * 0.2}" stroke-linecap="round" stroke-linejoin="round"/>`
       : `<path d="${t.d}" fill="${t.paint}" fill-rule="evenodd"/>`;
   const half = tiles.map((t) => `<g transform="${t.transform}">${shape(t)}</g>`).join("");
+  const inset = insetTransform(mark);
+  const body = `${half}<g transform="${halfTransform(mark)}">${half}</g>`;
 
   return [
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${SIZE} ${SIZE}" width="${SIZE}" height="${SIZE}" role="img" aria-label="${name} mark">`,
     `<clipPath id="m"><rect width="${SIZE}" height="${SIZE}" rx="${mark.radius}"/></clipPath>`,
     `<rect width="${SIZE}" height="${SIZE}" rx="${mark.radius}" fill="${palette.base}"/>`,
-    `<g clip-path="url(#m)">${half}<g transform="${halfTransform(mark)}">${half}</g></g>`,
+    `<g clip-path="url(#m)">${inset ? `<g transform="${inset}">${body}</g>` : body}</g>`,
     `</svg>`,
   ].join("");
 }

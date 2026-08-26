@@ -44,6 +44,15 @@ void main() {
     + texture(u_state, v_uv - vec2(0.0, u_texel.y)).r;
   float next = sum * 0.5 - prev;
   next *= u_damping;
+
+  // Absorbing border. Without this the grid edge is a hard wall: waves
+  // reflect off it and travel back inward, which reads as the ripple
+  // bouncing around the box rather than dispersing. Damping hard across a
+  // band at the edge swallows them instead.
+  vec2 toEdge = min(v_uv, 1.0 - v_uv);
+  float edge = smoothstep(0.0, 0.14, min(toEdge.x, toEdge.y));
+  next *= mix(0.82, 1.0, edge);
+
   outColor = vec4(next, here, 0.0, 1.0);
 }`;
 
@@ -153,11 +162,11 @@ export function WaterRipples({
   resolution = 256,
   /**
    * How far the surface bends what is behind it, as a multiplier on the
-   * surface slope. Small on purpose — over a plain ground the highlight does
-   * most of the work and heavy displacement looks like a fairground mirror.
-   * Push it toward 3 only if the backdrop is busy enough to carry it.
+   * surface slope. Very small on purpose — over a plain ground the highlight
+   * does the work, and displacement past about 1 looks like a fairground
+   * mirror. Only push it up if the backdrop is busy enough to carry it.
    */
-  refraction = 0.9,
+  refraction = 0.1,
   /** Brightness of the light catching the surface. */
   specular = 0.5,
   /** Closer to 1 rings for longer. */

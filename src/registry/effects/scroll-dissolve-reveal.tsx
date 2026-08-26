@@ -2,6 +2,7 @@
 
 /**
  * @name Scroll Dissolve Reveal
+ * @note Deliberately has no reduced-motion fallback. The dissolve is the component — degrading it leaves a static image, at which point there is no reason to use it. Reach for something else if reduced motion matters on the page.
  * @description WebGL shader that dissolves one image into another as you scroll past it.
  * @tags portfolio, scroll, webgl, shader, image, three
  * @height 900

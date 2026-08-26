@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getCategories } from "@/lib/registry";
+import { EntryBrowser } from "@/components/gallery/entry-browser";
 
 export const dynamic = "force-dynamic";
 
@@ -14,41 +14,25 @@ export default async function CategoryPage({
   if (!category) notFound();
 
   return (
-    <div className="mx-auto max-w-5xl px-10 py-14">
+    <div className="mx-auto max-w-6xl px-10 py-14">
       <h1 className="text-2xl font-semibold tracking-tight">
         {category.label}
       </h1>
       {category.blurb && (
-        <p className="mt-2 text-sm text-g-dim">{category.blurb}</p>
+        <p className="mt-2 max-w-lg text-sm text-g-dim">{category.blurb}</p>
       )}
 
-      <div className="mt-8 grid gap-3 sm:grid-cols-2">
-        {category.entries.map((entry) => (
-          <Link
-            key={entry.slug}
-            href={`/${entry.category}/${entry.slug}`}
-            className="rounded-xl border border-g-line bg-g-surface p-4 transition-colors hover:border-g-brand"
-          >
-            <div className="text-sm font-medium">{entry.name}</div>
-            {entry.description && (
-              <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-g-dim">
-                {entry.description}
-              </p>
-            )}
-            {entry.tags.length > 0 && (
-              <div className="mt-3 flex flex-wrap gap-1">
-                {entry.tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="rounded border border-g-line px-1.5 py-0.5 text-[10px] text-g-dim"
-                  >
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </Link>
-        ))}
+      <div className="mt-7">
+        <EntryBrowser
+          entries={category.entries.map((e) => ({
+            slug: e.slug,
+            category: e.category,
+            name: e.name,
+            description: e.description,
+            tags: e.tags,
+            height: e.height,
+          }))}
+        />
       </div>
     </div>
   );

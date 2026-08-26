@@ -60,9 +60,12 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
           <input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search…"
-            className="w-full rounded-md border border-g-line bg-g-canvas py-1.5 pl-7 pr-2 text-xs outline-none placeholder:text-g-dim focus:border-g-brand"
+            placeholder="Filter…"
+            className="w-full rounded-md border border-g-line bg-g-canvas py-1.5 pl-7 pr-12 text-xs outline-none transition-colors placeholder:text-g-dim focus:border-g-brand"
           />
+          <kbd className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 rounded border border-g-line bg-g-surface px-1 py-0.5 font-mono text-[9px] text-g-dim">
+            ⌘K
+          </kbd>
         </div>
       </div>
 
@@ -88,12 +91,18 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
                     <Link
                       href={href}
                       className={cn(
-                        "block truncate rounded-md px-2 py-1.5 text-[13px] transition-colors",
+                        "relative block truncate rounded-md py-1.5 pl-3 pr-2 text-[13px] transition-all duration-200",
                         active
                           ? "bg-g-brand/10 font-medium text-g-brand"
-                          : "text-g-dim hover:bg-g-canvas hover:text-g-ink",
+                          : "text-g-dim hover:bg-g-canvas hover:pl-3.5 hover:text-g-ink",
                       )}
                     >
+                      <span
+                        className={cn(
+                          "absolute left-0 top-1/2 h-4 w-0.5 -translate-y-1/2 rounded-full bg-g-brand transition-transform duration-200",
+                          active ? "scale-y-100" : "scale-y-0",
+                        )}
+                      />
                       {entry.name}
                     </Link>
                   </li>

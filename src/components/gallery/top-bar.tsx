@@ -57,10 +57,11 @@ export function TopBar({
           </kbd>
         </button>
 
+        {/* The two showcase pages, not registry categories — they are
+            products built from the shelf rather than things on it. */}
         <nav className="hidden items-center gap-1 md:flex">
-          <TopLink href="/design">Design</TopLink>
-          <TopLink href="/app">App UI</TopLink>
-          <TopLink href="/pages">Pages</TopLink>
+          <TopLink href="/app">App Shell</TopLink>
+          <TopLink href="/logo">Logo Generator</TopLink>
         </nav>
 
         <a

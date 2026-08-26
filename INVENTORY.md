@@ -1,6 +1,6 @@
 # Component Inventory
 
-**70 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**71 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -58,7 +58,7 @@
 | [Spacing, Radii & Shadows](src/registry/design/spacing-radii-shadows.tsx) | The scales components should pull from, so values stop being invented per component. | spacing, radius, shadow, tokens, design-system |
 | [Typography](src/registry/design/typography.tsx) | Type scale, weights and line heights — plus the case for replacing system-ui with a real typeface. | typography, fonts, scale, design-system |
 
-## App UI (20)
+## App UI (21)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -67,6 +67,7 @@
 | [Calendar View](src/registry/app/calendar-view.tsx) | Full event calendar — month, week, day, year and agenda views, with drag-to-move, resize and event editing. | calendar, schedule, events, drag-drop, app |
 | [Carousel](src/registry/app/carousel.tsx) | Stacked card carousel — cards recede behind the active one, with autoplay, arrows and indicators. | carousel, slider, testimonials, cards, app |
 | [Combobox](src/registry/app/combobox.tsx) | Searchable select with keyboard navigation and animated option filtering — for lists too long for a plain select. | combobox, select, search, autocomplete, form, app |
+| [Confirm Delete](src/registry/app/confirm-delete.tsx) | Type-to-confirm dialog for irreversible actions — each field unlocks the next, and the button stays dead until every one matches. | dialog, confirm, destructive, danger-zone, form, app, must-have |
 | [Data Table](src/registry/app/data-table.tsx) | Your GustFlow table, ported — multi-sort, nested AND/OR filters, group-by, column resize/reorder/hide, footer aggregates, CSV export and virtualised rows. | table, data, sorting, filtering, grouping, virtualised, app |
 | [Date Picker](src/registry/app/date-picker.tsx) | Full month calendar in a popover, plus a compact inline strip for picking a day near today. | date, calendar, picker, form, app |
 | [Drawer](src/registry/app/drawer.tsx) | Bottom sheet that drags to dismiss — the mobile counterpart to the side sheet in Overlays. | drawer, bottom-sheet, mobile, overlay, app |

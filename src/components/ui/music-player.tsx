@@ -176,7 +176,7 @@ export function MusicPlayer({
   return (
     <div
       className={cn(
-        "relative select-none text-white transition-[width] duration-700 ease-out",
+        "relative select-none text-neutral-900 dark:text-white transition-[width] duration-700 ease-out",
         collapsed ? "w-[188px]" : "w-[min(420px,90vw)]",
         className,
       )}
@@ -246,7 +246,7 @@ export function MusicPlayer({
             <div className="truncate text-sm font-semibold uppercase tracking-wide">
               {track.title}
             </div>
-            <div className="truncate text-[0.65rem] uppercase tracking-[0.2em] text-white/50">
+            <div className="truncate text-[0.65rem] uppercase tracking-[0.2em] text-neutral-500 dark:text-white/50">
               {track.artist}
             </div>
           </div>

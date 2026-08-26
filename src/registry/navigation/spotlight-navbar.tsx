@@ -11,7 +11,7 @@ import { SpotlightNavbar } from "@/components/ui/spotlight-navbar";
 
 export default function SpotlightNavbarDemo() {
   return (
-    <div className="flex min-h-[360px] items-center justify-center bg-black p-8">
+    <div className="flex min-h-[360px] items-center justify-center bg-background p-8">
       <SpotlightNavbar
         items={[
           { label: "Work", href: "#work" },

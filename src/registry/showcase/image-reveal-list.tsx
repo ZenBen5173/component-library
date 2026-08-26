@@ -47,7 +47,7 @@ const ITEMS = [
 
 export default function ImageRevealListDemo() {
   return (
-    <div className="min-h-[620px] bg-white px-6 py-16 dark:bg-black">
+    <div className="min-h-[620px] bg-white px-6 py-16 dark:bg-background">
       <ImageRevealList items={ITEMS} />
     </div>
   );

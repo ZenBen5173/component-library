@@ -45,7 +45,7 @@ export default function MagneticButton({
   }
 
   return (
-    <div className="grid min-h-[360px] place-items-center bg-neutral-950">
+    <div className="grid min-h-[360px] place-items-center bg-background">
       <motion.button
         ref={ref}
         onMouseMove={handleMove}

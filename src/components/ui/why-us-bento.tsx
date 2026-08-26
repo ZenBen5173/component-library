@@ -100,7 +100,7 @@ export function WhyUsBento({
           </motion.div>
 
           {/* 02: Senior Talent (Tall & Dark) */}
-          <div className="col-span-1 md:col-span-1 row-span-1 md:row-span-2 rounded-xl border-[1.5px] border-transparent bg-black p-5 sm:p-6 md:p-7 relative overflow-hidden group transition-all duration-500 flex flex-col justify-between text-white min-h-[310px] sm:min-h-[350px]">
+          <div className="col-span-1 md:col-span-1 row-span-1 md:row-span-2 rounded-xl border-[1.5px] border-transparent bg-black p-5 sm:p-6 md:p-7 relative overflow-hidden group transition-all duration-500 flex flex-col justify-between text-neutral-900 dark:text-white min-h-[310px] sm:min-h-[350px]">
             {/* Visual: Stacked Cards */}
             <div className="relative z-10 w-full flex flex-col items-center justify-center min-h-[140px] sm:min-h-[160px] mb-3 sm:mb-4 translate-x-2">
               <div className="relative w-full max-w-[170px] sm:max-w-[200px] aspect-4/3 group-hover:-translate-y-2 group-hover:scale-105 transition-all duration-300 ease-out">
@@ -145,7 +145,7 @@ export function WhyUsBento({
             </div>
 
             <div className="relative z-10">
-              <h3 className="text-lg sm:text-xl font-bold text-white mb-1.5">
+              <h3 className="text-lg sm:text-xl font-bold text-neutral-900 dark:text-white mb-1.5">
                 From Idea to Production
               </h3>
               <p className="text-neutral-400 text-xs sm:text-sm leading-relaxed">

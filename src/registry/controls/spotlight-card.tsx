@@ -26,13 +26,13 @@ export default function SpotlightCard({
   }
 
   return (
-    <div className="grid min-h-[420px] place-items-center bg-neutral-950 p-8">
+    <div className="grid min-h-[420px] place-items-center bg-background p-8">
       <div
         ref={ref}
         onMouseMove={handleMove}
         onMouseEnter={() => setVisible(true)}
         onMouseLeave={() => setVisible(false)}
-        className="group relative w-full max-w-sm overflow-hidden rounded-2xl border border-white/10 bg-neutral-900/60 p-8 transition-colors duration-300 hover:border-white/20"
+        className="group relative w-full max-w-sm overflow-hidden rounded-2xl border border-border bg-card p-8 transition-colors duration-300 hover:border-foreground/20"
       >
         <div
           aria-hidden
@@ -44,19 +44,19 @@ export default function SpotlightCard({
         />
 
         <div className="relative">
-          <div className="grid size-9 place-items-center rounded-lg border border-white/10 bg-white/5">
+          <div className="grid size-9 place-items-center rounded-lg border border-border bg-muted">
             <svg
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"
               strokeWidth="1.5"
-              className="size-4 text-indigo-300"
+              className="size-4 text-primary"
             >
               <path d="M13 2 3 14h8l-1 8 10-12h-8l1-8Z" strokeLinejoin="round" />
             </svg>
           </div>
-          <h3 className="mt-5 text-base font-medium text-white">{title}</h3>
-          <p className="mt-2 text-sm leading-relaxed text-white/50">{body}</p>
+          <h3 className="mt-5 text-base font-medium text-foreground">{title}</h3>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{body}</p>
         </div>
       </div>
     </div>

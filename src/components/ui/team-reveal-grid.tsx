@@ -312,7 +312,7 @@ export function TeamRevealGrid({
                         active ? "translate-y-0 opacity-100" : "translate-y-3 opacity-0",
                       )}
                     >
-                      <p className="line-clamp-3 text-[11px] leading-[1.45] text-white/78 @min-[560px]:text-xs">
+                      <p className="line-clamp-3 text-[11px] leading-[1.45] text-neutral-600 dark:text-white/78 @min-[560px]:text-xs">
                         {member.expertise}
                       </p>
                     </div>

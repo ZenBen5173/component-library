@@ -11,7 +11,7 @@ import { HighlightGrid } from "@/components/ui/highlight-grid";
 
 export default function HighlightGridDemo() {
   return (
-    <div className="grid min-h-[560px] place-items-center bg-white p-8 dark:bg-black">
+    <div className="grid min-h-[560px] place-items-center bg-white p-8 dark:bg-background">
       <HighlightGrid />
     </div>
   );

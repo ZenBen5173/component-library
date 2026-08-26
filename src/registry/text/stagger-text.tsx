@@ -12,8 +12,8 @@ import TextAnimation from "@/components/ui/staggerText";
 
 export default function StaggerTextDemo() {
   return (
-    <div className="min-h-[460px] bg-neutral-950 px-8 py-20">
-      <div className="mx-auto max-w-2xl space-y-8 text-white">
+    <div className="min-h-[460px] bg-background px-8 py-20">
+      <div className="mx-auto max-w-2xl space-y-8 text-foreground">
         <TextAnimation divideBy="letter">Selected work</TextAnimation>
         <TextAnimation delay={0.3}>
           We design and build digital products for teams who care about the

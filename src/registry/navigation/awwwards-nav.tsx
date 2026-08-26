@@ -12,7 +12,7 @@ import { AwwwardsNav } from "@/components/ui/awwwards-nav";
 
 export default function AwwwardsNavDemo() {
   return (
-    <div className="relative min-h-[520px] overflow-hidden bg-neutral-950">
+    <div className="relative min-h-[520px] overflow-hidden bg-background">
       <AwwwardsNav className="absolute bottom-6 left-1/2 -translate-x-1/2" />
     </div>
   );

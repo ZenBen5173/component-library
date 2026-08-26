@@ -20,10 +20,10 @@ const PEOPLE = [
 
 export default function SharedTooltipAvatarsDemo() {
   return (
-    <div className="grid min-h-[320px] place-items-center bg-white dark:bg-neutral-950">
+    <div className="grid min-h-[320px] place-items-center bg-background">
       <div className="text-center">
         <SharedTooltipAvatars items={PEOPLE} />
-        <p className="mt-6 text-xs uppercase tracking-widest text-neutral-500">
+        <p className="mt-6 text-xs uppercase tracking-widest text-muted-foreground">
           Trusted by 2,000+ teams
         </p>
       </div>

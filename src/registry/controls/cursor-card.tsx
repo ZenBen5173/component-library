@@ -12,7 +12,7 @@ import { CursorCard } from "@/components/ui/cursor-card";
 
 export default function CursorCardDemo() {
   return (
-    <div className="grid min-h-[460px] place-items-center bg-neutral-950 p-8">
+    <div className="grid min-h-[460px] place-items-center bg-background p-8">
       <div className="grid w-full max-w-3xl gap-4 sm:grid-cols-2">
         <CursorCard
           image="https://picsum.photos/seed/cursor-a/600/400"

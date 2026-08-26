@@ -12,7 +12,7 @@ import { MorphText } from "@/components/ui/morph-text";
 
 export default function MorphTextDemo() {
   return (
-    <div className="min-h-[520px] bg-neutral-950">
+    <div className="min-h-[520px] bg-background">
       <MorphText
         words={["CREATE", "DESIGN", "DEVELOP", "SHIP"]}
         interval={2600}

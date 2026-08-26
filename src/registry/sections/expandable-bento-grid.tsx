@@ -79,7 +79,7 @@ const ITEMS = [
 
 export default function ExpandableBentoGridDemo() {
   return (
-    <div className="min-h-[760px] bg-white p-6 dark:bg-black">
+    <div className="min-h-[760px] bg-white p-6 dark:bg-background">
       <ExpandableBentoGrid items={ITEMS} />
     </div>
   );

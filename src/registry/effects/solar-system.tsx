@@ -12,7 +12,7 @@ import { SolarSystem } from "@/components/ui/solar-system";
 
 export default function SolarSystemDemo() {
   return (
-    <div className="grid min-h-[760px] w-full place-items-center bg-neutral-950">
+    <div className="grid min-h-[760px] w-full place-items-center bg-background">
       <SolarSystem />
     </div>
   );

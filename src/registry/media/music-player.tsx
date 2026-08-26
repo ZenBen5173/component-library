@@ -33,7 +33,7 @@ const TRACKS = [
 
 export default function MusicPlayerDemo() {
   return (
-    <div className="grid min-h-[480px] place-items-center bg-neutral-950 p-8">
+    <div className="grid min-h-[480px] place-items-center bg-background p-8">
       <MusicPlayer tracks={TRACKS} accentColor="#a78bfa" />
     </div>
   );

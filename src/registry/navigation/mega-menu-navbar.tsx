@@ -41,7 +41,7 @@ const RESOURCE_GROUPS = [
 
 export default function MegaMenuNavbarDemo() {
   return (
-    <div className="min-h-[620px] bg-white dark:bg-black">
+    <div className="min-h-[620px] bg-background">
       <MegaMenuNavbar
         brandName="VengeanceUI"
         logo={<FileCode className="size-5" />}
@@ -49,10 +49,10 @@ export default function MegaMenuNavbarDemo() {
         resourceGroups={RESOURCE_GROUPS}
       />
       <div className="px-8 py-24 text-center">
-        <p className="text-sm text-neutral-500">
+        <p className="text-sm text-muted-foreground">
           A quieter navigation system for exploring the component library.
         </p>
-        <p className="mt-2 text-xs text-neutral-400">
+        <p className="mt-2 text-xs text-muted-foreground">
           Hover &ldquo;Features&rdquo;, &ldquo;Use Cases&rdquo; or
           &ldquo;Resources&rdquo; in the bar above.
         </p>

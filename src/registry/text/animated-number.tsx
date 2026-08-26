@@ -24,15 +24,15 @@ export default function AnimatedNumberDemo() {
   }, []);
 
   return (
-    <div className="grid min-h-[380px] place-items-center gap-10 bg-neutral-950 text-white">
+    <div className="grid min-h-[380px] place-items-center gap-10 bg-background text-foreground">
       <div className="text-center">
-        <p className="mb-2 text-xs uppercase tracking-widest text-white/40">
+        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
           AnimatedNumber
         </p>
         <AnimatedNumber value={value} className="text-6xl font-semibold" />
       </div>
       <div className="text-center">
-        <p className="mb-2 text-xs uppercase tracking-widest text-white/40">
+        <p className="mb-2 text-xs uppercase tracking-widest text-muted-foreground">
           AnimatedScore
         </p>
         <AnimatedScore value={value} className="text-6xl font-semibold" />

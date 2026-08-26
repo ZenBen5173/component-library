@@ -35,7 +35,7 @@ const ITEMS = [
 
 export default function FaqAccordionDemo() {
   return (
-    <div className="min-h-[620px] bg-white px-6 py-16 dark:bg-black">
+    <div className="min-h-[620px] bg-white px-6 py-16 dark:bg-background">
       <FaqAccordion items={ITEMS} title="Frequently asked" />
     </div>
   );

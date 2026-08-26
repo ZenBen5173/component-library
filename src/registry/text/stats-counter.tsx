@@ -18,7 +18,7 @@ const STATS = [
 
 export default function StatsCounterDemo() {
   return (
-    <div className="grid min-h-[360px] place-items-center bg-neutral-950 px-8">
+    <div className="grid min-h-[360px] place-items-center bg-background px-8">
       <div className="grid w-full max-w-3xl grid-cols-1 gap-10 text-center sm:grid-cols-3">
         {STATS.map((stat) => (
           <div key={stat.label}>
@@ -27,9 +27,9 @@ export default function StatsCounterDemo() {
               prefix={stat.prefix}
               suffix={stat.suffix}
               decimals={stat.decimals}
-              className="text-5xl font-semibold text-white"
+              className="text-5xl font-semibold text-foreground"
             />
-            <p className="mt-2 text-xs uppercase tracking-widest text-white/40">
+            <p className="mt-2 text-xs uppercase tracking-widest text-muted-foreground">
               {stat.label}
             </p>
           </div>

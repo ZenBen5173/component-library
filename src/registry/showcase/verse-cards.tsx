@@ -12,7 +12,7 @@ import { VerseCards } from "@/components/ui/verse-cards";
 
 export default function VerseCardsDemo() {
   return (
-    <div className="grid min-h-[640px] place-items-center bg-neutral-950 p-8">
+    <div className="grid min-h-[640px] place-items-center bg-background p-8">
       <VerseCards
         cards={[
           "Meridian",

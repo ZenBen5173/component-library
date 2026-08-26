@@ -69,7 +69,7 @@ function Scale({
         <div className="flex border-t border-border">
           {Object.values(dark).map((c, i) => (
             <div key={i} className="relative h-9 flex-1" style={{ background: c }}>
-              <span className="absolute inset-0 grid place-items-center text-[9px] tabular-nums text-white/40">
+              <span className="absolute inset-0 grid place-items-center text-[9px] tabular-nums text-muted-foreground">
                 {i + 1}
               </span>
             </div>

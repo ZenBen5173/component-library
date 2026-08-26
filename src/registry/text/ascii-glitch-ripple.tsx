@@ -11,8 +11,8 @@ import { AsciiGlitchRipple } from "@/components/ui/ascii-glitch-ripple";
 
 export default function AsciiGlitchRippleDemo() {
   return (
-    <div className="grid min-h-[400px] place-items-center bg-neutral-950">
-      <div className="flex flex-col gap-4 font-mono text-2xl text-white">
+    <div className="grid min-h-[400px] place-items-center bg-background">
+      <div className="flex flex-col gap-4 font-mono text-2xl text-foreground">
         <AsciiGlitchRipple href="#">SELECTED WORK</AsciiGlitchRipple>
         <AsciiGlitchRipple href="#" dur={700}>
           ABOUT THE STUDIO

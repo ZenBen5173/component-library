@@ -43,7 +43,7 @@ const MEMBERS = [
 
 export default function TeamRevealGridDemo() {
   return (
-    <div className="min-h-[780px] bg-white dark:bg-black">
+    <div className="min-h-[780px] bg-background">
       <TeamRevealGrid members={MEMBERS} />
     </div>
   );

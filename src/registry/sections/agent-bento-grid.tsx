@@ -12,7 +12,7 @@ import { AgentBentoGrid } from "@/components/ui/agent-bento-grid";
 
 export default function AgentBentoGridDemo() {
   return (
-    <div className="min-h-[900px] bg-white p-6 dark:bg-black">
+    <div className="min-h-[900px] bg-white p-6 dark:bg-background">
       <AgentBentoGrid />
     </div>
   );

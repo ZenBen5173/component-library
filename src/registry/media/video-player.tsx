@@ -21,7 +21,7 @@ import {
 
 export default function VideoPlayerDemo() {
   return (
-    <div className="grid min-h-[560px] w-full place-items-center bg-black p-6">
+    <div className="grid min-h-[560px] w-full place-items-center bg-background p-6">
       <div className="relative aspect-video w-full max-w-3xl">
         <VideoPlayer style={{ width: "100%", height: "100%" }}>
           <VideoPlayerContent

@@ -1,6 +1,6 @@
 # Component Inventory
 
-**70 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**69 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -14,11 +14,10 @@
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
 | [Spotlight Card](src/registry/controls/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
 
-## effects (7)
+## effects (6)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
-| [Cursor Ripples](src/registry/effects/cursor-ripples.tsx) | Still water that only moves where you touch it — rings spread from the pointer, bend what is under them, and settle. | cursor, water, ripple, glass, canvas, interactive, must-have, portfolio |
 | [Custom Cursor](src/registry/effects/custom-cursor.tsx) | A dot that tracks the pointer with a ring trailing on a spring, swelling over anything clickable. Plus labelled presence cursors for multiplayer. | cursor, portfolio, micro-interaction, hover, must-have |
 | [Highlight Grid](src/registry/effects/highlight-grid.tsx) | Grid of labels where a single coloured highlight glides to whichever cell you point at. | cool, grid, highlight, hover, website |
 | [Scroll Dissolve Reveal](src/registry/effects/scroll-dissolve-reveal.tsx) | WebGL shader that dissolves one image into another as you scroll past it. | portfolio, scroll, webgl, shader, image, three |

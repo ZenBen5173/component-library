@@ -153,10 +153,15 @@ export function WaterRipples({
   src,
   /** Simulation grid. 256 is plenty; higher costs fill rate, not fidelity. */
   resolution = 256,
-  /** How far the surface bends what is behind it. */
-  refraction = 0.55,
+  /**
+   * How far the surface bends what is behind it, as a multiplier on the
+   * surface slope. The slope across a 256 grid is on the order of 0.01, so
+   * anything below about 1 moves the lookup by a pixel or two and reads as
+   * nothing at all.
+   */
+  refraction = 3.2,
   /** Brightness of the light catching the surface. */
-  specular = 0.35,
+  specular = 0.5,
   /** Closer to 1 rings for longer. */
   damping = 0.992,
 }: {
@@ -281,8 +286,8 @@ export function WaterRipples({
         gl.bindTexture(gl.TEXTURE_2D, a.tex);
         gl.uniform1i(gl.getUniformLocation(dropP, "u_state"), 0);
         gl.uniform2f(gl.getUniformLocation(dropP, "u_center"), p.x, p.y);
-        gl.uniform1f(gl.getUniformLocation(dropP, "u_radius"), 0.03);
-        gl.uniform1f(gl.getUniformLocation(dropP, "u_strength"), 0.06);
+        gl.uniform1f(gl.getUniformLocation(dropP, "u_radius"), 0.045);
+        gl.uniform1f(gl.getUniformLocation(dropP, "u_strength"), 0.13);
         gl.drawArrays(gl.TRIANGLES, 0, 3);
         [a, b] = [b, a];
       }

@@ -7,7 +7,7 @@
  * @height 760
  * @note The data is static and never changes — the motion is entirely in how it is drawn, which is the point. Live Charts is the other case, where the numbers themselves stream. Everything loops through `motion`, so the gallery's reduced-motion toggle stops all of it; nothing here is on a rAF loop of its own.
  */
-import { useRef, useState } from "react";
+import { useId, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
 import {
   Tooltip,
@@ -20,6 +20,12 @@ import { DURATION, EASE, SPRING } from "@/lib/motion";
 
 const REVENUE = [42, 55, 48, 71, 65, 88, 79, 96];
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug"];
+const TILES = [
+  { label: "Sessions", value: "8,420", tone: "text-foreground", trend: [30, 44, 38, 61, 55, 72, 68, 81] },
+  { label: "Bounce", value: "24%", tone: "text-amber-500", trend: [70, 62, 66, 54, 58, 46, 44, 40] },
+  { label: "Signups", value: "1,204", tone: "text-emerald-500", trend: [20, 26, 31, 29, 42, 48, 60, 66] },
+];
+
 const CHANNELS = [
   { label: "Direct", value: 44, tint: "var(--chart-1)" },
   { label: "Search", value: 28, tint: "var(--chart-2)" },
@@ -238,6 +244,81 @@ function AreaChart() {
   );
 }
 
+/**
+ * The area chart's sweep, at tile size.
+ *
+ * Masked rather than dashed for the same reason: a dash has hard ends and
+ * slides along like a block, where a gradient mask lets the light fade up and
+ * away. Mask ids come from useId, or every tile shares the first one's sweep
+ * and they all pulse together.
+ */
+function SweepSparkline({ data, className }: { data: number[]; className?: string }) {
+  const id = useId().replace(/:/g, "");
+  const w = 96;
+  const h = 28;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const span = max - min || 1;
+  const step = w / Math.max(data.length - 1, 1);
+  const d = data
+    .map((v, i) => {
+      const x = i * step;
+      const y = h - ((v - min) / span) * (h - 5) - 2.5;
+      return `${i === 0 ? "M" : "L"} ${x.toFixed(1)} ${y.toFixed(1)}`;
+    })
+    .join(" ");
+
+  return (
+    <svg viewBox={`0 0 ${w} ${h}`} className={cn("overflow-visible", className)} aria-hidden>
+      <defs>
+        <linearGradient id={`${id}-g`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="white" stopOpacity="0" />
+          <stop offset="50%" stopColor="white" stopOpacity="1" />
+          <stop offset="100%" stopColor="white" stopOpacity="0" />
+        </linearGradient>
+        <mask id={`${id}-m`} maskUnits="userSpaceOnUse" x={-w} y={0} width={w * 3} height={h}>
+          <motion.rect
+            y={0}
+            width={w * 0.55}
+            height={h}
+            fill={`url(#${id}-g)`}
+            initial={{ x: -w * 0.55 }}
+            animate={{ x: w }}
+            transition={{ duration: 5, ease: "linear", repeat: Infinity }}
+          />
+        </mask>
+      </defs>
+
+      <path d={d} fill="none" stroke="currentColor" strokeWidth={1.5}
+        strokeLinecap="round" strokeLinejoin="round" opacity={0.35} />
+      <g mask={`url(#${id}-m)`}>
+        <path d={d} fill="none" stroke="currentColor" strokeWidth={1.9}
+          strokeLinecap="round" strokeLinejoin="round" />
+      </g>
+    </svg>
+  );
+}
+
+function SparkTiles() {
+  return (
+    <div className="grid gap-3 sm:grid-cols-3">
+      {TILES.map((t) => (
+        <div key={t.label} className="rounded-lg border border-border bg-card px-3 py-2.5">
+          <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+            {t.label}
+          </p>
+          <div className="mt-1 flex items-end justify-between gap-2">
+            <p className={cn("font-display text-lg font-semibold tabular-nums", t.tone)}>
+              {t.value}
+            </p>
+            <SweepSparkline data={t.trend} className={cn("h-7 w-24 shrink-0", t.tone)} />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function BarChart() {
   return (
     <div className="rounded-lg border border-border bg-card p-4">
@@ -385,6 +466,7 @@ export default function LivingCharts() {
         className={cn("mx-auto max-w-3xl space-y-4")}
       >
         <AreaChart />
+        <SparkTiles />
         <div className="grid gap-4 lg:grid-cols-2">
           <BarChart />
           <SheenRing />

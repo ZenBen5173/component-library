@@ -17,6 +17,10 @@ const AvatarGroup = ({
 	...props
 }: AvatarGroupProps) => {
 	const totalAvatars = React.Children.count(children);
+	const firstChild = React.Children.toArray(children)[0];
+	const firstChildClassName = React.isValidElement<AvatarProps>(firstChild)
+		? firstChild.props.className
+		: undefined;
 	const displayedAvatars = React.Children.toArray(children)
 		.slice(0, max)
 		.reverse();
@@ -28,7 +32,15 @@ const AvatarGroup = ({
 			{...props}
 		>
 			{remainingAvatars > 0 && (
-				<Avatar className="-ml-2 hover:z-10 relative ring-2 ring-background">
+				// Wears the same classes as the avatars it stands in for,
+				// otherwise the counter keeps the base size while sized
+				// children shrink around it.
+				<Avatar
+					className={cn(
+						firstChildClassName,
+						"-ml-2 hover:z-10 relative ring-2 ring-background",
+					)}
+				>
 					<AvatarFallback className="bg-muted-foreground text-white">
 						+{remainingAvatars}
 					</AvatarFallback>
@@ -40,7 +52,13 @@ const AvatarGroup = ({
 				return (
 					<div key={index} className="-ml-2 hover:z-10 relative">
 						{React.cloneElement(avatar as React.ReactElement<AvatarProps>, {
-							className: "ring-2 ring-background",
+							// Merged, not replaced. Overwriting the child's
+							// className threw away whatever size it was given
+							// and every avatar snapped back to the default.
+							className: cn(
+								(avatar as React.ReactElement<AvatarProps>).props.className,
+								"ring-2 ring-background",
+							),
 						})}
 					</div>
 				);

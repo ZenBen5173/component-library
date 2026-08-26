@@ -1,13 +1,14 @@
 # Component Inventory
 
-**66 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**67 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
-## controls (6)
+## controls (7)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
 | [Animated Button](src/registry/controls/animated-button.tsx) | Button with a shine sweeping across the label and a matching gradient running the border. | button, shine, hover, spring, versatile |
 | [Cursor Card](src/registry/controls/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
+| [Generate Button](src/registry/controls/generate-button.tsx) | Pill button with a travelling border light and letters that lift one after another while it works. | button, hover, micro-interaction, ai, cta, portfolio, versatile |
 | [Liquid Metal](src/registry/controls/liquid-metal.tsx) | A WebGL shader used as a moving metal rim — on a button, and around an input that only comes alive once it has focus. | button, input, shader, webgl, metal, hover, portfolio |
 | [Magnetic Button](src/registry/controls/magnetic-button.tsx) | Button whose label and body lean toward the cursor, then spring back on exit. | micro-interaction, hover, spring, button |
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |

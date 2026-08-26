@@ -1,6 +1,6 @@
 # Component Inventory
 
-**69 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**70 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -14,7 +14,7 @@
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
 | [Spotlight Card](src/registry/controls/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
 
-## effects (6)
+## effects (7)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -24,6 +24,7 @@
 | [Scroll Dissolve Reveal](src/registry/effects/scroll-dissolve-reveal.tsx) | WebGL shader that dissolves one image into another as you scroll past it. | portfolio, scroll, webgl, shader, image, three |
 | [Solar System](src/registry/effects/solar-system.tsx) | Tech-stack orbit: labelled nodes revolve on concentric rings around a centre logo, pausable on hover. | cool, orbit, tech-stack, animated, showcase, portfolio |
 | [Water Field](src/registry/effects/water-field.tsx) | A slow caustic water surface for sitting behind content — always moving, never asking for attention. | water, glass, webgl, shader, background, ambient, portfolio |
+| [Water Ripples](src/registry/effects/water-ripples.tsx) | Real water: the pointer dents a simulated surface and the ripples bend what is behind them, rather than drawing rings on top. | cursor, water, ripple, webgl, shader, interactive, hero, must-have, portfolio |
 
 ## media (1)
 

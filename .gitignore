@@ -1,0 +1,43 @@
+node_modules
+.next
+out
+next-env.d.ts
+*.tsbuildinfo
+.DS_Store
+.env*.local
+
+# ── Not redistributable ───────────────────────────────────────────────
+# skiper-ui's terms forbid republishing their material, so these stay
+# local. The gallery still shows them for you; a clone of this repo
+# simply won't have them. See CREDITS.md.
+src/components/ui/skiper-ui/
+public/images/peeps/
+src/registry/ui/smooth-input.tsx
+src/registry/ui/border-arrow-tooltip.tsx
+src/registry/ui/theme-toggle-buttons.tsx
+src/registry/ui/theme-toggle-expand.tsx
+src/registry/ui/link-hover-effects.tsx
+src/registry/ui/animated-menu-icons.tsx
+src/registry/ui/fading-scroll-area.tsx
+src/registry/ui/scroll-progress-dial.tsx
+src/registry/ui/video-player.tsx
+src/registry/text/scroll-number-showcase.tsx
+src/registry/sections/crowd-canvas.tsx
+src/registry/sections/hover-expand-gallery.tsx
+
+# Animate UI — MIT with a Commons Clause that forbids redistributing the
+# components. Same situation as skiper-ui: fine to use, not to republish.
+src/components/animate-ui/
+src/hooks/use-auto-height.tsx
+src/hooks/use-controlled-state.tsx
+src/hooks/use-data-state.tsx
+src/lib/get-strict-context.tsx
+src/registry/app/overlays.tsx
+src/registry/app/sidebar.tsx
+src/registry/app/sidebar-with-tree.tsx
+src/registry/app/tabs-and-accordion.tsx
+src/registry/app/toggles-and-disclosure.tsx
+src/registry/app/alerts-and-confirms.tsx
+src/registry/app/context-menu-and-hover-card.tsx
+src/registry/app/feedback.tsx
+src/registry/app/form-controls.tsx

@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { motion } from "motion/react";
 import { usePathname, useRouter } from "next/navigation";
 import { ArrowRight, Search } from "lucide-react";
 import {
@@ -13,6 +14,7 @@ import {
   TreeProvider,
   TreeView,
 } from "@/components/kibo-ui/tree";
+import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 export type SidebarEntry = {
@@ -62,6 +64,34 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
   // Route drives selection: /controls/magnetic-button highlights the entry,
   // /controls highlights the category it lives in.
   const activeId = pathname.slice(1);
+
+  // The hover highlight is one element measured onto whichever row the
+  // pointer is over, rather than a background on each row. A per-row
+  // background cuts in and out; this travels, including between a category
+  // and an entry nested under it.
+  const navRef = useRef<HTMLElement>(null);
+  const [glide, setGlide] = useState<
+    { top: number; left: number; width: number; height: number } | null
+  >(null);
+
+  const trackRow = (e: React.PointerEvent) => {
+    // .group narrows this to the row trigger. Plain .cursor-pointer also
+    // catches the tree's expander chevrons, which are 16px wide — the
+    // highlight would collapse to a stub every time the pointer crossed one.
+    const row = (e.target as HTMLElement).closest<HTMLElement>(".group.cursor-pointer");
+    const host = navRef.current;
+    if (!row || !host || !host.contains(row)) return;
+    const r = row.getBoundingClientRect();
+    const h = host.getBoundingClientRect();
+    setGlide({
+      // Offsets are against the scroll container's content box, so they stay
+      // correct as the tree scrolls.
+      top: r.top - h.top + host.scrollTop,
+      left: r.left - h.left,
+      width: r.width,
+      height: r.height,
+    });
+  };
   const activeCategory = activeId.split("/")[0];
 
   const expanded = query.trim()
@@ -90,7 +120,29 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
         </div>
       </div>
 
-      <nav className="scrollbar-thin flex-1 overflow-y-auto py-2">
+      <nav
+        ref={navRef}
+        onPointerOver={trackRow}
+        onPointerLeave={() => setGlide(null)}
+        className="scrollbar-thin relative flex-1 overflow-y-auto py-2"
+      >
+        <motion.span
+          aria-hidden
+          className="pointer-events-none absolute z-0 rounded-md bg-g-canvas"
+          initial={false}
+          animate={
+            glide
+              ? {
+                  opacity: 1,
+                  top: glide.top,
+                  left: glide.left,
+                  width: glide.width,
+                  height: glide.height,
+                }
+              : { opacity: 0 }
+          }
+          transition={SPRING.default}
+        />
         {filtered.length === 0 ? (
           <p className="px-4 py-4 text-xs text-g-dim">No matches.</p>
         ) : (
@@ -170,7 +222,9 @@ export function Sidebar({ categories }: { categories: SidebarCategory[] }) {
 /** Overrides the tree's own accent colours with the gallery's chrome scale. */
 function rowClass(active: boolean) {
   return cn(
-    "py-1.5 pr-2 hover:bg-g-canvas",
-    active ? "bg-g-brand/10 text-g-brand hover:bg-g-brand/10" : "text-g-dim",
+    // No hover background of its own — the gliding highlight behind the rows
+    // is the hover state, and both together read as a double flash.
+    "relative z-10 py-1.5 pr-2 hover:bg-transparent",
+    active ? "bg-g-brand/10 text-g-brand hover:bg-g-brand/10" : "text-g-dim hover:text-g-ink",
   );
 }

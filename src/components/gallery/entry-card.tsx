@@ -73,12 +73,28 @@ export function EntryCard({ entry, index }: { entry: CardEntry; index: number })
     }
 
     let fired = false;
+    let retire: ReturnType<typeof setTimeout>;
+
+    // Mount on approach, unmount once well past. Keeping every thumbnail
+    // alive once loaded is what made the gallery seize: each is a whole app,
+    // and fourteen entries run canvas or WebGL. Browsers allow only a handful
+    // of live WebGL contexts, and past that they start tearing down and
+    // rebuilding them, which stalls the page rather than degrading it.
     const io = new IntersectionObserver(
       ([e]) => {
         fired = true;
-        if (!e.isIntersecting) return;
-        io.disconnect();
-        go();
+        if (e.isIntersecting) {
+          clearTimeout(retire);
+          done = false;
+          go();
+          return;
+        }
+        // A grace period, so scrolling past does not thrash mount/unmount.
+        clearTimeout(retire);
+        retire = setTimeout(() => {
+          setLive(false);
+          setLoaded(false);
+        }, 2500);
       },
       { rootMargin: "400px" },
     );
@@ -101,6 +117,7 @@ export function EntryCard({ entry, index }: { entry: CardEntry; index: number })
       detach();
       clearTimeout(stagger);
       clearTimeout(watchdog);
+      clearTimeout(retire);
     };
   }, [index]);
 

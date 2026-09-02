@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "next dev --turbopack -p 3333",
+    "dev": "node scripts/dev.mjs",
     "build": "next build",
     "start": "next start -p 3333",
     "new": "node scripts/new-component.mjs",
@@ -68,6 +68,7 @@
     "tailwind-merge": "^3.3.1",
     "three": "^0.185.1",
     "tunnel-rat": "^0.1.2",
+    "tw-animate-css": "^1.4.0",
     "vaul": "^1.1.2",
     "zod": "^3.25.76"
   },

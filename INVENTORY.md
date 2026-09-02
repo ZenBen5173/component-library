@@ -1,8 +1,8 @@
 # Component Inventory
 
-**75 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**77 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
-## controls (8)
+## controls (10)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -10,10 +10,12 @@
 | [Animated Icons](src/registry/controls/animated-icons.tsx) | Lucide icons that draw themselves on hover — and, more usefully, that a whole row can drive so the icon plays when you hover anything around it. | icon, hover, micro-interaction, lucide, navigation, must-have, versatile |
 | [Cursor Card](src/registry/controls/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
 | [Generate Button](src/registry/controls/generate-button.tsx) | Pill button with a travelling border light and letters that lift one after another while it works. | button, hover, micro-interaction, ai, cta, portfolio, versatile |
+| [Icon Picker](src/registry/controls/icon-picker.tsx) | Search all 1,865 lucide icons and pick one — every tile draws itself on as you pass it. | icon, picker, search, lucide, animated, must-have, versatile |
 | [Liquid Metal](src/registry/controls/liquid-metal.tsx) | A WebGL shader used as a moving metal rim — on a button, and around an input that only comes alive once it has focus. | button, input, shader, webgl, metal, hover, portfolio |
 | [Magnetic Button](src/registry/controls/magnetic-button.tsx) | Button whose label and body lean toward the cursor, then spring back on exit. | micro-interaction, hover, spring, button |
 | [Shared Tooltip Avatars](src/registry/controls/shared-tooltip-avatars.tsx) | Overlapping avatar stack with one tooltip that slides between faces instead of popping per avatar. | must-have, versatile, avatars, tooltip, hover, social-proof |
 | [Spotlight Card](src/registry/controls/spotlight-card.tsx) | Card with a radial glow that tracks the cursor and a border that lights up on hover. | card, hover, spotlight, dark |
+| [Tag Select](src/registry/controls/tag-select.tsx) | Notion's option picker — search, create what's missing, drag to reorder, every option shown as the tag it becomes. Single and multi. | select, multiselect, tags, picker, notion, form, must-have, versatile |
 
 ## effects (6)
 
@@ -63,13 +65,13 @@
 
 | Component | What it is | Tags |
 | --- | --- | --- |
-| [Activity Feed](src/registry/app/activity-feed.tsx) | Chronological event stream with self-updating relative timestamps, plus a notification bell with an unread count. | activity, feed, notifications, timeline, app |
+| [Activity Feed](src/registry/app/activity-feed.tsx) | Chronological event stream with relative timestamps that keep themselves current, plus a notification bell with an unread count. | activity, feed, notifications, timeline, app |
 | [Breadcrumbs](src/registry/app/breadcrumbs.tsx) | Trail that staggers in on mount, with animated separators and a hover state on each crumb. | breadcrumb, navigation, app |
 | [Calendar View](src/registry/app/calendar-view.tsx) | Full event calendar — month, week, day, year and agenda views, with drag-to-move, resize and event editing. | calendar, schedule, events, drag-drop, app |
 | [Carousel](src/registry/app/carousel.tsx) | Stacked card carousel — cards recede behind the active one, with autoplay, arrows and indicators. | carousel, slider, testimonials, cards, app |
 | [Combobox](src/registry/app/combobox.tsx) | Searchable select with keyboard navigation and animated option filtering — for lists too long for a plain select. | combobox, select, search, autocomplete, form, app |
 | [Confirm Delete](src/registry/app/confirm-delete.tsx) | Type-to-confirm dialog for irreversible actions — each field unlocks the next, and the button stays dead until every one matches. | dialog, confirm, destructive, danger-zone, form, app, must-have |
-| [Data Table](src/registry/app/data-table.tsx) | Your GustFlow table, ported — multi-sort, nested AND/OR filters, group-by, column resize/reorder/hide, footer aggregates, CSV export and virtualised rows. | table, data, sorting, filtering, grouping, virtualised, app |
+| [Data Table](src/registry/app/data-table.tsx) | Notion's database as a component: every property type, a property menu behind each heading, a sort and filter builder, group-by, per-column calculations, CSV export and virtualised rows. | table, data, sorting, filtering, grouping, virtualised, app |
 | [Date Picker](src/registry/app/date-picker.tsx) | Full month calendar in a popover, plus a compact inline strip for picking a day near today. | date, calendar, picker, form, app |
 | [Drawer](src/registry/app/drawer.tsx) | Bottom sheet that drags to dismiss — the mobile counterpart to the side sheet in Overlays. | drawer, bottom-sheet, mobile, overlay, app |
 | [File Upload](src/registry/app/file-upload.tsx) | Drag-and-drop dropzone with file-type and size limits, plus a filled state listing what was accepted. | upload, dropzone, file, form, app |

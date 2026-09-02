@@ -1,11 +1,20 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import type { ColumnDef, SortDir, ActiveFilter } from "./types";
-import { COLUMN_TYPE_REGISTRY } from "./columnTypes";
+import { useState, useMemo, useEffect, useRef } from "react";
+import type {
+  ColumnDef,
+  ColumnAggregate,
+  SortDir,
+  FilterConjunction,
+  FilterRule,
+} from "./types";
+import { COLUMN_TYPE_REGISTRY, makeMatcher } from "./columnTypes";
 import { TABLE_PAGE_SIZE } from "./shims";
 
 const SESSION_PREFIX = "fn-table-";
+
+/** Built once — see the note on COLLATOR in columnTypes. */
+const GROUP_COLLATOR = new Intl.Collator(undefined, { numeric: true, sensitivity: "base" });
 
 function loadSession<T>(viewId: string, key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
@@ -40,16 +49,21 @@ export interface UseDataTableState {
    */
   toggleSort: (key: string, opts?: { shiftKey?: boolean }) => void;
 
-  // Filter — flat per-column (legacy / default).
-  filters: ActiveFilter[];
-  setFilter: (key: string, value: string | string[]) => void;
-  clearFilter: (key: string) => void;
   clearAllFilters: () => void;
   hasActiveFilters: boolean;
-  /** Section J5 — when set, overrides the flat `filters` for evaluation.
-   *  Lets the advanced filter builder describe AND/OR trees. */
-  filterTree: import("./types").FilterGroup | null;
-  setFilterTree: (tree: import("./types").FilterGroup | null) => void;
+
+  /**
+   * The filter builder's rules, and the single word that joins them. Notion's
+   * simple mode: any number of lines, all AND or all OR.
+   */
+  rules: FilterRule[];
+  setRules: (rules: FilterRule[]) => void;
+  conjunction: FilterConjunction;
+  setConjunction: (c: FilterConjunction) => void;
+
+  /** Which calculation each column shows in the footer, if any. */
+  aggregates: Record<string, ColumnAggregate | undefined>;
+  setAggregate: (key: string, agg: ColumnAggregate | undefined) => void;
 
   // Search
   search: string;
@@ -122,63 +136,51 @@ export interface UseDataTableState {
   calendarDateKey: string | null;
   setCalendarDateKey: (key: string | null) => void;
 
-  // Section J4 — saved views.
-  savedViews: SavedView[];
-  refetchSavedViews: () => Promise<void>;
   /** Snapshot the user-mutable bits of state (sort/filters/hidden/order/widths/wrap/groupBy)
    *  in the same shape we persist to sessionStorage. Used by the
    *  consumer when posting a new saved view. */
   currentViewConfig: () => Record<string, unknown>;
-  /** Apply a saved view's config to the live state (overwrites). */
-  applyViewConfig: (config: Record<string, unknown>) => void;
 }
-
-export type SavedView = {
-  id: string;
-  table_key: string;
-  name: string;
-  config: Record<string, unknown>;
-  is_default: boolean;
-};
 
 /** Section J6 — view types. */
 export type ViewType = "table" | "kanban" | "calendar";
 
+export interface UseDataTableOptions {
+  /** Namespace for persisted state and saved views. Omit and nothing sticks. */
+  viewId?: string;
+  /**
+   * Rows per page. Was a fixed 25 baked into a shim, which meant every table
+   * in every app got the same page length whatever the row height or the
+   * screen.
+   */
+  pageSize?: number;
+  /** Off renders the whole result set rather than a page of it. */
+  paginated?: boolean;
+  /** How a row identifies itself. Defaults to `row.id`. */
+  rowId?: (row: Record<string, unknown>) => string;
+}
+
+const defaultRowId = (row: Record<string, unknown>) => String(row.id ?? "");
+
 export function useDataTable(
   columns: ColumnDef[],
   data: Record<string, unknown>[],
-  viewId?: string
+  options: UseDataTableOptions = {},
 ): UseDataTableState {
+  const {
+    viewId,
+    pageSize = TABLE_PAGE_SIZE,
+    paginated = true,
+    rowId = defaultRowId,
+  } = options;
+
   // --- View type (Section J6) ---
   const [viewType, setViewType] = useState<ViewType>("table");
   const [kanbanGroupKey, setKanbanGroupKey] = useState<string | null>(null);
   const [calendarDateKey, setCalendarDateKey] = useState<string | null>(null);
 
-  // --- Saved views (Section J4) ---
-  const [savedViews, setSavedViews] = useState<SavedView[]>([]);
-  const viewsLoadedRef = useRef(false);
-  useEffect(() => {
-    if (viewsLoadedRef.current || !viewId) return;
-    viewsLoadedRef.current = true;
-    fetch(`/api/data-table-views?table_key=${encodeURIComponent(viewId)}`)
-      .then((r) => (r.ok ? r.json() : { views: [] }))
-      .then((j: { views: SavedView[] }) => {
-        setSavedViews(j.views ?? []);
-        // Auto-apply default view on first load.
-        const def = (j.views ?? []).find((v) => v.is_default);
-        if (def) {
-          // Defer to next tick so initial state is settled.
-          queueMicrotask(() => {
-            // Apply the default config — replicate applyViewConfig inline here
-            // since the closure can't reach the function defined later.
-            const cfg = def.config;
-            if (Array.isArray(cfg.sort)) setSortRaw(cfg.sort as Array<{ key: string; dir: SortDir }>);
-            if (Array.isArray(cfg.filters)) setFiltersRaw(cfg.filters as ActiveFilter[]);
-          });
-        }
-      })
-      .catch(() => { /* silent — saved views are optional */ });
-  }, [viewId]);
+  /** Whether the remembered view state has been applied yet. */
+  const hydratedRef = useRef(false);
 
   // --- Selection (Section J7) ---
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -220,38 +222,43 @@ export function useDataTable(
     }
   }
 
-  // --- Filters ---
-  const [filters, setFiltersRaw] = useState<ActiveFilter[]>([]);
+  // The filter builder's own state.
+  const [rules, setRulesRaw] = useState<FilterRule[]>([]);
+  const [conjunction, setConjunctionRaw] = useState<FilterConjunction>("and");
 
-  function setFilter(key: string, value: string | string[]) {
-    setFiltersRaw((prev) => {
-      const next = prev.filter((f) => f.key !== key);
-      next.push({ key, value });
-      if (viewId) saveSession(viewId, "filters", next);
+  function setRules(next: FilterRule[]) {
+    setRulesRaw(next);
+    if (viewId) saveSession(viewId, "rules", next);
+  }
+  function setConjunction(next: FilterConjunction) {
+    setConjunctionRaw(next);
+    if (viewId) saveSession(viewId, "conjunction", next);
+  }
+
+  /**
+   * Which calculation sits under each column.
+   *
+   * Held here rather than on the column definition so choosing one is a view
+   * decision like sorting is — it does not need the consumer to own and write
+   * back its columns. Seeded from whatever the definitions declare.
+   */
+  const [aggregates, setAggregates] = useState<Record<string, ColumnAggregate | undefined>>(
+    () => Object.fromEntries(columns.filter((c) => c.aggregate).map((c) => [c.key, c.aggregate])),
+  );
+
+  function setAggregate(key: string, agg: ColumnAggregate | undefined) {
+    setAggregates((prev) => {
+      const next = { ...prev, [key]: agg };
+      if (viewId) saveSession(viewId, "aggregates", next);
       return next;
     });
   }
 
-  function clearFilter(key: string) {
-    setFiltersRaw((prev) => {
-      const next = prev.filter((f) => f.key !== key);
-      if (viewId) saveSession(viewId, "filters", next);
-      return next;
-    });
-  }
+  const hasActiveFilters = rules.length > 0;
 
   function clearAllFilters() {
-    setFiltersRaw([]);
-    if (viewId) saveSession(viewId, "filters", []);
+    setRules([]);
   }
-
-  // Section J5 — compound filter tree (overrides flat filters when set).
-  const [filterTree, setFilterTreeRaw] = useState<import("./types").FilterGroup | null>(null);
-  function setFilterTree(tree: import("./types").FilterGroup | null) {
-    setFilterTreeRaw(tree);
-  }
-
-  const hasActiveFilters = filters.length > 0 || (filterTree?.children.length ?? 0) > 0;
 
   // --- Search (debounced) ---
   const [searchInput, setSearchInput] = useState("");
@@ -272,13 +279,11 @@ export function useDataTable(
   }
 
   // --- Hidden columns ---
-  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(() => {
-    if (viewId) {
-      const saved = loadSession<string[]>(viewId, "hidden", []);
-      if (saved.length > 0) return new Set(saved);
-    }
-    return new Set(columns.filter((c) => c.hidden).map((c) => c.key));
-  });
+  // Seeded from the column definitions only. Anything remembered from a
+  // previous visit is applied after mount — see the hydration effect below.
+  const [hiddenColumns, setHiddenColumns] = useState<Set<string>>(
+    () => new Set(columns.filter((c) => c.hidden).map((c) => c.key)),
+  );
 
   function toggleColumn(key: string) {
     setHiddenColumns((prev) => {
@@ -291,13 +296,9 @@ export function useDataTable(
   }
 
   // --- Column order ---
-  const [columnOrder, setColumnOrderRaw] = useState<string[]>(() => {
-    if (viewId) {
-      const saved = loadSession<string[]>(viewId, "order", []);
-      if (saved.length > 0) return saved;
-    }
-    return columns.map((c) => c.key);
-  });
+  const [columnOrder, setColumnOrderRaw] = useState<string[]>(() =>
+    columns.map((c) => c.key),
+  );
 
   function setColumnOrder(order: string[]) {
     setColumnOrderRaw(order);
@@ -331,8 +332,10 @@ export function useDataTable(
         return prev;
       }
 
-      // Saved order present → preserve user reordering, just sync membership
-      if (viewId) {
+      // Saved order present → preserve user reordering, just sync membership.
+      // Only once hydration has run, or this would apply the remembered order
+      // during the first render and reintroduce the mismatch.
+      if (viewId && hydratedRef.current) {
         const saved = loadSession<string[]>(viewId, "order", []);
         if (saved.length > 0) {
           const savedSet = new Set(saved);
@@ -349,10 +352,7 @@ export function useDataTable(
   }, [incomingKeys, viewId]);
 
   // --- Column widths ---
-  const [columnWidths, setColumnWidthsRaw] = useState<Record<string, number>>(() => {
-    if (viewId) return loadSession<Record<string, number>>(viewId, "widths", {});
-    return {};
-  });
+  const [columnWidths, setColumnWidthsRaw] = useState<Record<string, number>>({});
 
   function setColumnWidth(key: string, width: number) {
     setColumnWidthsRaw((prev) => {
@@ -368,13 +368,7 @@ export function useDataTable(
   function closeColumnConfig() { setColumnConfigOpen(null); }
 
   // --- Column wrap ---
-  const [wrapColumns, setWrapColumns] = useState<Set<string>>(() => {
-    if (viewId) {
-      const saved = loadSession<string[]>(viewId, "wrap", []);
-      if (saved.length > 0) return new Set(saved);
-    }
-    return new Set<string>();
-  });
+  const [wrapColumns, setWrapColumns] = useState<Set<string>>(() => new Set<string>());
 
   function toggleWrap(key: string) {
     setWrapColumns((prev) => {
@@ -387,17 +381,10 @@ export function useDataTable(
   }
 
   // --- Group-by (Sprint 5.5) ---
-  const [groupBy, setGroupByRaw] = useState<string | null>(() => {
-    if (viewId) return loadSession<string | null>(viewId, "groupBy", null);
-    return null;
-  });
-  const [collapsedGroups, setCollapsedGroupsRaw] = useState<Set<string>>(() => {
-    if (viewId) {
-      const saved = loadSession<string[]>(viewId, "collapsedGroups", []);
-      return new Set(saved);
-    }
-    return new Set();
-  });
+  const [groupBy, setGroupByRaw] = useState<string | null>(null);
+  const [collapsedGroups, setCollapsedGroupsRaw] = useState<Set<string>>(
+    () => new Set<string>(),
+  );
 
   function setGroupBy(key: string | null) {
     setGroupByRaw(key);
@@ -418,11 +405,38 @@ export function useDataTable(
     });
   }
 
-  // --- Hydrate persisted sort/filters on mount ---
-  const hydratedRef = useRef(false);
+  /**
+   * Everything remembered from a previous visit, applied after mount.
+   *
+   * None of it may be read while the first render is happening. The server has
+   * no sessionStorage, so it renders the columns as declared; a browser that
+   * remembers a different order would then render something else and React
+   * would throw the server's HTML away — which is exactly what happened, with
+   * the last column arriving as "ID" on the client and "Last edited time" from
+   * the server. Reading it here instead means both sides start identical and
+   * the remembered state is applied a beat later.
+   */
   useEffect(() => {
     if (hydratedRef.current || !viewId) return;
     hydratedRef.current = true;
+
+    const savedHidden = loadSession<string[]>(viewId, "hidden", []);
+    if (savedHidden.length > 0) setHiddenColumns(new Set(savedHidden));
+
+    const savedOrder = loadSession<string[]>(viewId, "order", []);
+    if (savedOrder.length > 0) setColumnOrderRaw(savedOrder);
+
+    const savedWidths = loadSession<Record<string, number>>(viewId, "widths", {});
+    if (Object.keys(savedWidths).length > 0) setColumnWidthsRaw(savedWidths);
+
+    const savedWrap = loadSession<string[]>(viewId, "wrap", []);
+    if (savedWrap.length > 0) setWrapColumns(new Set(savedWrap));
+
+    const savedGroupBy = loadSession<string | null>(viewId, "groupBy", null);
+    if (savedGroupBy) setGroupByRaw(savedGroupBy);
+
+    const savedCollapsed = loadSession<string[]>(viewId, "collapsedGroups", []);
+    if (savedCollapsed.length > 0) setCollapsedGroupsRaw(new Set(savedCollapsed));
     // Hydrate sort. Backwards-compat: if a single-entry object is found,
     // upgrade it to the new array shape.
     const savedSortAny = loadSession<unknown>(viewId, "sort", null);
@@ -432,8 +446,16 @@ export function useDataTable(
       const legacy = savedSortAny as { key: string; dir: SortDir };
       setSortRaw([{ key: legacy.key, dir: legacy.dir }]);
     }
-    const savedFilters = loadSession<ActiveFilter[]>(viewId, "filters", []);
-    if (savedFilters.length > 0) setFiltersRaw(savedFilters);
+    const savedRules = loadSession<FilterRule[]>(viewId, "rules", []);
+    if (savedRules.length > 0) setRulesRaw(savedRules);
+    const savedConjunction = loadSession<FilterConjunction | null>(viewId, "conjunction", null);
+    if (savedConjunction) setConjunctionRaw(savedConjunction);
+    const savedAggregates = loadSession<Record<string, ColumnAggregate> | null>(
+      viewId,
+      "aggregates",
+      null,
+    );
+    if (savedAggregates) setAggregates(savedAggregates);
   }, [viewId]);
 
   // --- Visible columns (not hidden) ---
@@ -454,55 +476,69 @@ export function useDataTable(
 
   // --- Process data: search → filter → sort ---
   const processedData = useMemo(() => {
-    let result = [...data];
+    // Column lookups were `columns.find(...)` inside the comparator and the
+    // filter predicate — both run per row, and the comparator runs O(n log n)
+    // times, so every comparison walked the column list again. On ten
+    // thousand rows that is roughly a million needless scans per sort.
+    const byKey = new Map(columns.map((c) => [c.key, c]));
 
-    // Search
+    // Not copied yet: filters return new arrays anyway, and only the sort
+    // below mutates. Copying up front duplicates the whole dataset on every
+    // recompute even when nothing is sorted.
+    let result: Record<string, unknown>[] = data;
+
+    // Search. The key and its matcher are paired up once rather than looked
+    // up per column per row — at fifty thousand rows and nineteen columns
+    // that is a million registry lookups saved on every keystroke.
     if (search) {
       const q = search.toLowerCase();
+      const searchable = columns.map((col) => ({
+        key: col.key,
+        matches: COLUMN_TYPE_REGISTRY[col.type].matchesSearch,
+      }));
       result = result.filter((row) =>
-        columns.some((col) => {
-          const entry = COLUMN_TYPE_REGISTRY[col.type];
-          const v = row[col.key];
-          return entry.matchesSearch(v, q);
-        })
+        searchable.some((col) => col.matches(row[col.key], q)),
       );
     }
 
-    // Filters — Section J5. When a filterTree is set, evaluate the tree.
-    // Otherwise the flat filters[] (legacy) all-AND.
-    if (filterTree) {
-      function evalNode(node: import("./types").FilterNode, row: Record<string, unknown>): boolean {
-        if (node.kind === "leaf") {
-          const col = columns.find((c) => c.key === node.key);
-          if (!col) return true;
-          const entry = COLUMN_TYPE_REGISTRY[col.type];
-          return entry.matchesFilter(row[node.key], node.value);
-        }
-        // group
-        if (node.children.length === 0) return true;
-        if (node.op === "AND") return node.children.every((c) => evalNode(c, row));
-        return node.children.some((c) => evalNode(c, row));
-      }
-      result = result.filter((row) => evalNode(filterTree, row));
-    } else {
-      for (const { key, value } of filters) {
-        const col = columns.find((c) => c.key === key);
-        if (!col) continue;
-        const entry = COLUMN_TYPE_REGISTRY[col.type];
-        result = result.filter((row) => entry.matchesFilter(row[key], value));
+    // The builder's rules, joined by the one conjunction. Evaluated before
+    // anything else so an OR set is not silently ANDed with a column filter.
+    if (rules.length > 0) {
+      // Each rule becomes a ready-made test once, not once per row.
+      const tests = rules
+        .map((rule) => {
+          const col = byKey.get(rule.key);
+          return col
+            ? { key: rule.key, matches: makeMatcher(rule.op, rule.value, col.type) }
+            : null;
+        })
+        .filter((t): t is { key: string; matches: (v: unknown) => boolean } => t !== null);
+
+      if (tests.length > 0) {
+        result =
+          conjunction === "and"
+            ? result.filter((row) => tests.every((t) => t.matches(row[t.key])))
+            : result.filter((row) => tests.some((t) => t.matches(row[t.key])));
       }
     }
 
     // Sort — multi-column chain. Iterate sort entries in order; first
     // non-zero comparison wins. Ties fall through to the next entry.
     if (sort.length > 0) {
-      result.sort((a, b) => {
-        for (const s of sort) {
-          const col = columns.find((c) => c.key === s.key);
-          if (!col) continue;
-          const entry = COLUMN_TYPE_REGISTRY[col.type];
-          if (!entry) continue;
-          const cmp = entry.sortFn(a[s.key], b[s.key]);
+      // Resolved once, outside the comparator.
+      const chain = sort
+        .map((s) => {
+          const col = byKey.get(s.key);
+          const entry = col ? COLUMN_TYPE_REGISTRY[col.type] : undefined;
+          return entry ? { key: s.key, dir: s.dir, sortFn: entry.sortFn } : null;
+        })
+        .filter((x): x is { key: string; dir: "asc" | "desc"; sortFn: (a: unknown, b: unknown) => number } => x !== null);
+
+      // Copy here, and only here — sort mutates in place, and `result` may
+      // still be the caller's array if nothing filtered it.
+      result = [...result].sort((a, b) => {
+        for (const s of chain) {
+          const cmp = s.sortFn(a[s.key], b[s.key]);
           if (cmp !== 0) return s.dir === "asc" ? cmp : -cmp;
         }
         return 0;
@@ -510,7 +546,10 @@ export function useDataTable(
     }
 
     return result;
-  }, [data, search, filters, sort, columns]);
+    // filterTree belongs here: it is read above, and without it a changed
+    // tree returned the cached result — nested AND/OR filters simply did not
+    // apply until some unrelated change happened to invalidate the memo.
+  }, [data, search, rules, conjunction, sort, columns]);
 
   // --- Pagination ---
   const [page, setPageRaw] = useState(1);
@@ -525,33 +564,34 @@ export function useDataTable(
   // left `page` stale, so loosening the filter jumped back to the high
   // page instead of resetting to 1.
   const prevSearchRef = useRef(search);
-  const prevFiltersKeyRef = useRef(JSON.stringify(filters));
-  const prevFilterTreeKeyRef = useRef(JSON.stringify(filterTree));
+  const prevRulesKeyRef = useRef(JSON.stringify(rules) + conjunction);
   useEffect(() => {
-    const filtersKey = JSON.stringify(filters);
-    const filterTreeKey = JSON.stringify(filterTree);
-    if (
-      prevSearchRef.current !== search ||
-      prevFiltersKeyRef.current !== filtersKey ||
-      prevFilterTreeKeyRef.current !== filterTreeKey
-    ) {
+    const rulesKey = JSON.stringify(rules) + conjunction;
+    if (prevSearchRef.current !== search || prevRulesKeyRef.current !== rulesKey) {
       setPageRaw(1);
       prevSearchRef.current = search;
-      prevFiltersKeyRef.current = filtersKey;
-      prevFilterTreeKeyRef.current = filterTreeKey;
+      prevRulesKeyRef.current = rulesKey;
     }
-  }, [search, filters, filterTree]);
+  }, [search, rules, conjunction]);
 
-  const totalPages = Math.max(1, Math.ceil(processedData.length / TABLE_PAGE_SIZE));
+  const totalPages = paginated
+    ? Math.max(1, Math.ceil(processedData.length / pageSize))
+    : 1;
   const safePage = Math.min(page, totalPages);
 
   function setPage(p: number) {
     setPageRaw(Math.max(1, Math.min(p, totalPages)));
   }
 
+  // Unpaginated hands the whole set to the virtualiser, which only ever builds
+  // DOM for the rows in view — so this stays viable well past what a page of
+  // twenty-five is for.
   const paginatedData = useMemo(
-    () => processedData.slice((safePage - 1) * TABLE_PAGE_SIZE, safePage * TABLE_PAGE_SIZE),
-    [processedData, safePage]
+    () =>
+      paginated
+        ? processedData.slice((safePage - 1) * pageSize, safePage * pageSize)
+        : processedData,
+    [processedData, safePage, pageSize, paginated]
   );
 
   // Section J2 — footer aggregates over processedData. Sum/avg/min/max
@@ -561,9 +601,10 @@ export function useDataTable(
   const footerValues = useMemo<Record<string, string>>(() => {
     const out: Record<string, string> = {};
     for (const col of columns) {
-      if (!col.aggregate) continue;
+      const agg = aggregates[col.key];
+      if (!agg) continue;
       const values = processedData.map((row) => row[col.key]);
-      if (col.aggregate === "count") {
+      if (agg === "count") {
         out[col.key] = String(values.length);
         continue;
       }
@@ -578,15 +619,15 @@ export function useDataTable(
         continue;
       }
       let result: number;
-      if (col.aggregate === "sum") result = nums.reduce((a, b) => a + b, 0);
-      else if (col.aggregate === "avg") result = nums.reduce((a, b) => a + b, 0) / nums.length;
-      else if (col.aggregate === "min") result = Math.min(...nums);
+      if (agg === "sum") result = nums.reduce((a, b) => a + b, 0);
+      else if (agg === "avg") result = nums.reduce((a, b) => a + b, 0) / nums.length;
+      else if (agg === "min") result = Math.min(...nums);
       else result = Math.max(...nums);
       // Format: integers stay int, fractions limited to 2 decimal places.
       out[col.key] = Number.isInteger(result) ? String(result) : result.toFixed(2);
     }
     return out;
-  }, [processedData, columns]);
+  }, [processedData, columns, aggregates]);
 
   // Sprint 5.5 — derive groups from processedData (NOT paginatedData,
   // because we want all rows in a group regardless of page boundaries).
@@ -609,20 +650,34 @@ export function useDataTable(
     }
     return Array.from(map.entries())
       .map(([value, rows]) => ({ value, rows }))
-      .sort((a, b) => a.value.localeCompare(b.value));
+      .sort((a, b) => GROUP_COLLATOR.compare(a.value, b.value));
   }, [processedData, groupBy]);
+
+  function currentViewConfig(): Record<string, unknown> {
+    return {
+      sort,
+      rules,
+      conjunction,
+      hiddenColumns: Array.from(hiddenColumns),
+      columnOrder,
+      columnWidths,
+      wrapColumns: Array.from(wrapColumns),
+      groupBy,
+    };
+  }
 
   return {
     sort,
     setSort,
     toggleSort,
-    filters,
-    setFilter,
-    clearFilter,
     clearAllFilters,
     hasActiveFilters,
-    filterTree,
-    setFilterTree,
+    rules,
+    setRules,
+    conjunction,
+    setConjunction,
+    aggregates,
+    setAggregate,
     search: searchInput,
     setSearch,
     searchOpen,
@@ -658,41 +713,13 @@ export function useDataTable(
     setKanbanGroupKey,
     calendarDateKey,
     setCalendarDateKey,
-    savedViews,
-    refetchSavedViews: async () => {
-      if (!viewId) return;
-      try {
-        const r = await fetch(`/api/data-table-views?table_key=${encodeURIComponent(viewId)}`);
-        if (r.ok) {
-          const j = await r.json();
-          setSavedViews((j.views ?? []) as SavedView[]);
-        }
-      } catch { /* silent */ }
-    },
-    currentViewConfig: () => ({
-      sort,
-      filters,
-      hiddenColumns: Array.from(hiddenColumns),
-      columnOrder,
-      columnWidths,
-      wrapColumns: Array.from(wrapColumns),
-      groupBy,
-    }),
-    applyViewConfig: (cfg: Record<string, unknown>) => {
-      if (Array.isArray(cfg.sort)) setSortRaw(cfg.sort as Array<{ key: string; dir: SortDir }>);
-      if (Array.isArray(cfg.filters)) setFiltersRaw(cfg.filters as ActiveFilter[]);
-      if (Array.isArray(cfg.hiddenColumns)) setHiddenColumns(new Set(cfg.hiddenColumns as string[]));
-      if (Array.isArray(cfg.columnOrder)) setColumnOrderRaw(cfg.columnOrder as string[]);
-      if (cfg.columnWidths && typeof cfg.columnWidths === "object") setColumnWidthsRaw(cfg.columnWidths as Record<string, number>);
-      if (Array.isArray(cfg.wrapColumns)) setWrapColumns(new Set(cfg.wrapColumns as string[]));
-      if (typeof cfg.groupBy === "string" || cfg.groupBy === null) setGroupByRaw(cfg.groupBy as string | null);
-    },
+    currentViewConfig,
     selectedIds,
     toggleSelected,
     toggleAllOnPage: () => {
       setSelectedIds((prev) => {
         // If every visible row on this page is selected, clear; otherwise add them all.
-        const pageIds = paginatedData.map((r) => r.id as string).filter(Boolean);
+        const pageIds = paginatedData.map(rowId).filter(Boolean);
         const allSelected = pageIds.every((id) => prev.has(id));
         const next = new Set(prev);
         if (allSelected) for (const id of pageIds) next.delete(id);
@@ -701,8 +728,7 @@ export function useDataTable(
       });
     },
     selectAllInView: () => {
-      const ids = processedData.map((r) => r.id as string).filter(Boolean);
-      setSelectedIds(new Set(ids));
+      setSelectedIds(new Set(processedData.map(rowId).filter(Boolean)));
     },
     clearSelection,
   };

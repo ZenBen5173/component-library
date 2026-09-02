@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Pencil } from "lucide-react";
 import type { ColumnDef } from "../types";
 import { COLUMN_TYPE_REGISTRY } from "../columnTypes";
 
@@ -19,6 +18,35 @@ export function CellRenderer({ column, value, row, isWrapped, onEdit, onRowClick
   const [editing, setEditing] = useState(false);
   const typeDef = COLUMN_TYPE_REGISTRY[column.type];
   const editable = (column.editable ?? typeDef.defaultEditable) && !!onEdit;
+
+  // ID column — the prefix lives on the column, which the type registry
+  // cannot see either. Rendered here so the stored value stays bare.
+  if (column.type === "id" && column.idPrefix) {
+    const raw = String(value ?? "");
+    return (
+      <div className="truncate font-mono text-xs tabular-nums text-[var(--muted-foreground)]">
+        {raw ? `${column.idPrefix}${raw}` : "—"}
+      </div>
+    );
+  }
+
+  // Button column — the action lives on the column definition, which the type
+  // registry cannot see: renderCell is handed the value and the row, not the
+  // column it belongs to.
+  if (column.type === "button") {
+    if (!column.button) return null;
+    return (
+      <div className="flex items-center" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          onClick={() => column.button!.onClick(row)}
+          className="rounded-[3px] border border-[var(--border)] px-2 py-0.5 text-xs text-[var(--foreground)] transition-colors hover:bg-[var(--card)] active:scale-95"
+        >
+          {column.button.label}
+        </button>
+      </div>
+    );
+  }
 
   // Actions column — render action buttons directly
   if (column.type === "actions" && column.actions) {
@@ -62,8 +90,9 @@ export function CellRenderer({ column, value, row, isWrapped, onEdit, onRowClick
     );
   }
 
-  // Boolean — direct toggle (no pencil/edit-mode)
-  if (column.type === "boolean" && editable) {
+  // A checkbox toggles where it stands — going through an edit mode to tick a
+  // box is a step for nothing.
+  if ((column.type === "boolean" || column.type === "checkbox") && editable) {
     return (
       <div onClick={(e) => e.stopPropagation()}>
         {typeDef.renderEditCell(value, (v) => onEdit!(v), () => {}, column.options)}
@@ -89,13 +118,16 @@ export function CellRenderer({ column, value, row, isWrapped, onEdit, onRowClick
   const content = column.renderCell ? column.renderCell(value, row) : typeDef.renderCell(value, row);
 
   if (editable) {
+    // No pencil and no outline: the cell is the control. An icon in every row
+    // of every editable column is a lot of furniture to say something the
+    // click already says, and it costs the numbers their right edge.
+    const numeric = column.type === "number";
     return (
       <div
-        className={`group/edit flex items-center gap-1 min-w-0 cursor-pointer ${isWrapped ? "whitespace-normal break-words" : ""}`}
+        className={`flex items-center min-w-0 cursor-pointer ${numeric ? "justify-end tabular-nums" : ""} ${isWrapped ? "whitespace-normal break-words" : ""}`}
         onClick={(e) => { e.stopPropagation(); setEditing(true); }}
       >
         <span className={isWrapped ? "" : "truncate"}>{content}</span>
-        <Pencil className="h-3 w-3 text-[var(--muted-foreground)] opacity-0 group-hover/edit:opacity-100 shrink-0 transition-opacity" />
       </div>
     );
   }

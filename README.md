@@ -7,7 +7,7 @@ scratch.
 
 I got tired of doing that, so I built a shelf.
 
-**71 components I actually picked, tuned, and would reach for again.** Every one has the
+**77 components I actually picked, tuned, and would reach for again.** Every one has the
 micro-interactions already baked in: hover reveals, cursor tracking, staggered entrances, the
 small stuff that makes an interface feel alive instead of generated. You browse them in a live
 gallery, find the one you want, and copy it into your project. Done.
@@ -25,11 +25,17 @@ npm run dev
 
 Then open **http://localhost:3333**.
 
+The dev server watches its own memory. Opening any preview compiles every entry at once —
+that is what makes dropping a file into `src/registry` work with no registration step, and it
+costs about 2.4GB — so it restarts itself if it ever climbs past 2.8GB, and Ctrl+C stops the
+real server rather than leaving it holding the port. `DEV_MEM_LIMIT_MB=0 npm run dev` turns
+the watchdog off.
+
 ---
 
 ## What's on the shelf
 
-**71 components across 11 categories:** app UI, marketing sections, heroes, navigation,
+**77 components across 11 categories:** app UI, marketing sections, heroes, navigation,
 kinetic text, media, effects, and a design-system reference. Every entry renders live with
 sample data, so you see the real thing moving before you commit to it.
 

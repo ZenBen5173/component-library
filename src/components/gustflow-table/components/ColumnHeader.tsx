@@ -1,8 +1,8 @@
 "use client";
 
-import { useRef, useEffect, useState, useCallback, useId } from "react";
+import { useRef, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
-import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, EyeOff } from "lucide-react";
+import { ChevronUp, ChevronDown, ChevronsUpDown, Eye, EyeOff, GripVertical } from "lucide-react";
 import {
   DndContext,
   closestCenter,
@@ -14,13 +14,14 @@ import {
 import {
   SortableContext,
   horizontalListSortingStrategy,
+  verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { cn } from "@/lib/utils";
-import type { ColumnDef, SortDir, ActiveFilter } from "../types";
-import { COLUMN_TYPE_REGISTRY } from "../columnTypes";
-import { FilterPanel } from "./FilterPanel";
+import type { ColumnDef, ColumnType, SortDir, FilterRule } from "../types";
+import { AnimatedLucide, type IconHandle } from "@/components/ui/animated-lucide";
+import { PropertyMenu, columnIconName } from "./PropertyMenu";
 
 // --- Sort icon ---
 
@@ -40,169 +41,101 @@ function SortIcon({ column, sort }: { column: ColumnDef; sort: Array<{ key: stri
 
 // --- Column config panel ---
 
-interface ColumnConfigPanelProps {
-  column: ColumnDef;
-  sort: Array<{ key: string; dir: SortDir }>;
-  toggleSort: (key: string, opts?: { shiftKey?: boolean }) => void;
-  filters: ActiveFilter[];
-  setFilter: (key: string, value: string | string[]) => void;
-  clearFilter: (key: string) => void;
-  isWrapped: boolean;
-  toggleWrap: (key: string) => void;
-  onClose: () => void;
-  anchorRef: React.RefObject<HTMLElement | null>;
-  /** Sprint 5.5 — group-by support. */
-  isGroupedBy: boolean;
-  setGroupBy: (key: string | null) => void;
-}
-
-function ColumnConfigPanel({
-  column,
-  sort,
-  toggleSort,
-  filters,
-  setFilter,
-  clearFilter,
-  isWrapped,
-  toggleWrap,
-  onClose,
-  anchorRef,
-  isGroupedBy,
-  setGroupBy,
-}: ColumnConfigPanelProps) {
-  const ref = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState({ top: 0, left: 0 });
-
-  useEffect(() => {
-    if (!anchorRef.current) return;
-    const rect = anchorRef.current.getBoundingClientRect();
-    let left = rect.left;
-    if (left + 220 > window.innerWidth - 16) left = window.innerWidth - 236;
-    left = Math.max(8, left);
-    setPos({ top: rect.bottom + 4, left });
-  }, [anchorRef]);
-
-  useEffect(() => {
-    function handleClick(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node) && anchorRef.current && !anchorRef.current.contains(e.target as Node)) onClose();
-    }
-    function handleKey(e: KeyboardEvent) { if (e.key === "Escape") onClose(); }
-    document.addEventListener("mousedown", handleClick);
-    document.addEventListener("keydown", handleKey);
-    return () => { document.removeEventListener("mousedown", handleClick); document.removeEventListener("keydown", handleKey); };
-  }, [onClose, anchorRef]);
-
-  const isSortable = column.sortable !== false && column.type !== "actions";
-  const isFilterable = column.filterable !== false && column.type !== "actions";
-  const isWrappable = column.type !== "actions";
-
-  return createPortal(
-    <div ref={ref} className="fixed w-[220px] bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-card-lg p-2 space-y-2" style={{ top: pos.top, left: pos.left, zIndex: 9999 }}>
-      {/* Sort — J1 multi-column. */}
-      {isSortable && (() => {
-        const entry = sort.find((s) => s.key === column.key);
-        const idx = sort.findIndex((s) => s.key === column.key);
-        return (
-          <div className="space-y-1">
-            <p className="text-xs font-medium text-[var(--muted-foreground)]">
-              Sort {sort.length > 1 ? <span className="opacity-70">(chain of {sort.length})</span> : null}
-            </p>
-            <div className="flex gap-1">
-              <button
-                onClick={() => {
-                  // Move this column to ASC. If absent, append. If present desc, flip via shift.
-                  if (!entry) toggleSort(column.key);
-                  else if (entry.dir === "desc") toggleSort(column.key, { shiftKey: true });
-                  onClose();
-                }}
-                className={cn("flex-1 px-2 py-1 text-xs rounded border transition-colors",
-                  entry?.dir === "asc" ? "border-primary text-primary bg-primary/10" : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
-              >A → Z</button>
-              <button
-                onClick={() => {
-                  if (!entry) { toggleSort(column.key); toggleSort(column.key, { shiftKey: true }); }
-                  else if (entry.dir === "asc") toggleSort(column.key, { shiftKey: true });
-                  onClose();
-                }}
-                className={cn("flex-1 px-2 py-1 text-xs rounded border transition-colors",
-                  entry?.dir === "desc" ? "border-primary text-primary bg-primary/10" : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
-              >Z → A</button>
-              {entry && (
-                <button
-                  onClick={() => { toggleSort(column.key); onClose(); }}
-                  className="px-2 py-1 text-xs rounded border border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-                  title="Remove from sort chain"
-                >×</button>
-              )}
-            </div>
-            {entry && sort.length > 1 && (
-              <p className="text-[10px] text-[var(--muted-foreground)]">Position #{idx + 1} in sort chain</p>
-            )}
-          </div>
-        );
-      })()}
-
-      {/* Filter */}
-      {isFilterable && (
-        <FilterPanel column={column} filters={filters} onSetFilter={setFilter} onClearFilter={clearFilter} />
-      )}
-
-      {/* Wrap */}
-      {isWrappable && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-[var(--muted-foreground)]">Wrap text</p>
-          <button
-            onClick={() => toggleWrap(column.key)}
-            className={cn("px-2 py-1 text-xs rounded border transition-colors",
-              isWrapped ? "border-primary text-primary bg-primary/10" : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]")}
-          >
-            {isWrapped ? "On" : "Off"}
-          </button>
-        </div>
-      )}
-
-      {/* Sprint 5.5 — group-by */}
-      {column.type !== "actions" && (
-        <div className="space-y-1">
-          <p className="text-xs font-medium text-[var(--muted-foreground)]">Group by</p>
-          <button
-            onClick={() => { setGroupBy(isGroupedBy ? null : column.key); onClose(); }}
-            className={cn(
-              "w-full px-2 py-1 text-xs rounded border transition-colors text-left",
-              isGroupedBy
-                ? "border-primary text-primary bg-primary/10"
-                : "border-[var(--border)] text-[var(--muted-foreground)] hover:text-[var(--foreground)]"
-            )}
-          >
-            {isGroupedBy ? "Stop grouping by this column" : "Group rows by this column"}
-          </button>
-        </div>
-      )}
-    </div>,
-    document.body
-  );
-}
-
 // --- Column visibility menu ---
 
 export interface ColumnVisibilityMenuProps {
   columns: ColumnDef[];
   hiddenColumns: Set<string>;
   toggleColumn: (key: string) => void;
+  /** The canonical order, hidden columns included. */
+  columnOrder: string[];
+  setColumnOrder: (order: string[]) => void;
   onClose: () => void;
   anchorRef: React.RefObject<HTMLElement | null>;
 }
 
-export function ColumnVisibilityMenu({ columns, hiddenColumns, toggleColumn, onClose, anchorRef }: ColumnVisibilityMenuProps) {
+/**
+ * One row of the properties menu: shown or hidden, and draggable either way.
+ *
+ * Only the handle drags. Making the whole row draggable would mean every
+ * attempt to toggle a column risks becoming a two-pixel drag instead, and
+ * toggling is what people come here to do.
+ */
+function ColumnMenuRow({
+  column,
+  hidden,
+  onToggle,
+}: {
+  column: ColumnDef;
+  hidden: boolean;
+  onToggle: () => void;
+}) {
+  const sortable = useSortable({ id: column.key });
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortable;
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={{
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+      }}
+      className="flex items-center gap-1 rounded px-1 transition-colors hover:bg-[var(--card)]"
+    >
+      <span
+        {...attributes}
+        {...listeners}
+        aria-label={`Reorder ${column.label}`}
+        className="grid size-4 shrink-0 cursor-grab place-items-center text-[var(--muted-foreground)]/50 transition-colors hover:text-[var(--muted-foreground)] active:cursor-grabbing"
+      >
+        <GripVertical className="size-3.5" />
+      </span>
+      <button
+        onClick={onToggle}
+        className={cn(
+          "flex min-w-0 flex-1 items-center gap-2 py-1.5 text-left text-xs transition-colors",
+          hidden ? "text-[var(--muted-foreground)]" : "text-[var(--foreground)]",
+        )}
+      >
+        {/* Both eyes take the row's own colour. The shown one used to be the
+            primary blue, which made it the loudest thing in a menu of grey and
+            white and read as a state rather than as an icon. Shown is
+            foreground, hidden is muted — the same pair the labels use, and it
+            reads correctly in either theme. */}
+        {hidden ? (
+          <EyeOff className="size-3.5 shrink-0" />
+        ) : (
+          <Eye className="size-3.5 shrink-0" />
+        )}
+        <span className="truncate">{column.label}</span>
+      </button>
+    </div>
+  );
+}
+
+export function ColumnVisibilityMenu({
+  columns,
+  hiddenColumns,
+  toggleColumn,
+  columnOrder,
+  setColumnOrder,
+  onClose,
+  anchorRef,
+}: ColumnVisibilityMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
   const [pos, setPos] = useState({ top: 0, left: 0 });
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 4 } }),
+  );
 
   const hideableColumns = columns.filter((c) => c.type !== "actions");
 
   useEffect(() => {
     if (!anchorRef.current) return;
     const rect = anchorRef.current.getBoundingClientRect();
-    let left = rect.right - 200;
+    let left = rect.right - 232;
     if (left < 8) left = 8;
     setPos({ top: rect.bottom + 4, left });
   }, [anchorRef]);
@@ -217,35 +150,61 @@ export function ColumnVisibilityMenu({ columns, hiddenColumns, toggleColumn, onC
     return () => { document.removeEventListener("mousedown", handleClick); document.removeEventListener("keydown", handleKey); };
   }, [onClose, anchorRef]);
 
-  const visible = hideableColumns.filter((c) => !hiddenColumns.has(c.key));
-  const hidden = hideableColumns.filter((c) => hiddenColumns.has(c.key));
+  /**
+   * Listed in the order the table uses, not the order they were declared —
+   * otherwise dragging a row here moves a column somewhere else on screen and
+   * the list does not agree with the table it is describing.
+   */
+  const ordered = [...hideableColumns].sort((a, b) => {
+    const ai = columnOrder.indexOf(a.key);
+    const bi = columnOrder.indexOf(b.key);
+    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+  });
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    // Reordered against the canonical list, hidden columns included, so a
+    // column revealed later comes back where it was put rather than at the end.
+    const from = columnOrder.indexOf(active.id as string);
+    const to = columnOrder.indexOf(over.id as string);
+    if (from === -1 || to === -1) return;
+    const next = [...columnOrder];
+    next.splice(from, 1);
+    next.splice(to, 0, active.id as string);
+    setColumnOrder(next);
+  }
+
+  const shownCount = ordered.filter((c) => !hiddenColumns.has(c.key)).length;
 
   return createPortal(
-    <div ref={ref} className="fixed w-[200px] bg-[var(--background)] border border-[var(--border)] rounded-lg shadow-card-lg max-h-64 overflow-y-auto" style={{ top: pos.top, left: pos.left, zIndex: 9999 }}>
-      {visible.length > 0 && (
-        <div className="p-1">
-          <p className="px-2 py-1 text-[10px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Shown</p>
-          {visible.map((c) => (
-            <button key={c.key} onClick={() => toggleColumn(c.key)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--foreground)] hover:bg-[var(--card)] rounded transition-colors">
-              <Eye className="h-3.5 w-3.5 text-primary shrink-0" />
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
-      {hidden.length > 0 && (
-        <div className={cn("p-1", visible.length > 0 && "border-t border-[var(--border)]")}>
-          <p className="px-2 py-1 text-[10px] font-medium text-[var(--muted-foreground)] uppercase tracking-wide">Hidden</p>
-          {hidden.map((c) => (
-            <button key={c.key} onClick={() => toggleColumn(c.key)}
-              className="w-full flex items-center gap-2 px-2 py-1.5 text-xs text-[var(--muted-foreground)] hover:bg-[var(--card)] rounded transition-colors">
-              <EyeOff className="h-3.5 w-3.5 shrink-0" />
-              {c.label}
-            </button>
-          ))}
-        </div>
-      )}
+    <div
+      ref={ref}
+      className="fixed w-[232px] overflow-hidden rounded-lg border border-[var(--border)] bg-[var(--background)] shadow-card-lg"
+      style={{ top: pos.top, left: pos.left, zIndex: 9999 }}
+    >
+      <p className="border-b border-[var(--border)] px-3 py-2 text-[11px] text-[var(--muted-foreground)]">
+        {shownCount} of {ordered.length} shown · drag to reorder
+      </p>
+      <div className="max-h-64 overflow-y-auto p-1">
+        <DndContext
+          id="column-visibility"
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext items={ordered.map((c) => c.key)} strategy={verticalListSortingStrategy}>
+            {ordered.map((c) => (
+              <ColumnMenuRow
+                key={c.key}
+                column={c}
+                hidden={hiddenColumns.has(c.key)}
+                onToggle={() => toggleColumn(c.key)}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
+      </div>
     </div>,
     document.body
   );
@@ -255,16 +214,14 @@ export function ColumnVisibilityMenu({ columns, hiddenColumns, toggleColumn, onC
 
 interface ColumnHeaderRowProps {
   columns: ColumnDef[];
-  allColumns: ColumnDef[];
   sort: Array<{ key: string; dir: SortDir }>;
   toggleSort: (key: string, opts?: { shiftKey?: boolean }) => void;
-  filters: ActiveFilter[];
-  setFilter: (key: string, value: string | string[]) => void;
-  clearFilter: (key: string) => void;
+  /** Every rule in force, so a heading can say it is filtered. */
+  rules: FilterRule[];
+  onFilterColumn: (key: string) => void;
   columnConfigOpen: string | null;
   openColumnConfig: (key: string) => void;
   closeColumnConfig: () => void;
-  hiddenColumns: Set<string>;
   toggleColumn: (key: string) => void;
   wrapColumns: Set<string>;
   toggleWrap: (key: string) => void;
@@ -280,6 +237,11 @@ interface ColumnHeaderRowProps {
   /** Sprint 5.5 — group-by state + setter. */
   groupBy: string | null;
   setGroupBy: (key: string | null) => void;
+  /** Present only when the consumer owns its column list. */
+  onRename?: (key: string, label: string) => void;
+  onChangeType?: (key: string, type: ColumnType) => void;
+  onSetIcon?: (key: string, icon: string | undefined) => void;
+  onSetIdPrefix?: (key: string, prefix: string) => void;
   /** Section J7 polish — checkbox header rendered as the first column
    *  when bulk-actions are enabled. Sets/unsets selection for all rows
    *  on the current page. */
@@ -290,13 +252,16 @@ interface SortableColumnHeaderProps {
   col: ColumnDef;
   width: number;
   isSortable: boolean;
-  filters: ActiveFilter[];
   filterCount: number;
   hasFilter: boolean;
   sort: Array<{ key: string; dir: SortDir }>;
   toggleSort: (key: string, opts?: { shiftKey?: boolean }) => void;
-  setFilter: (key: string, value: string | string[]) => void;
-  clearFilter: (key: string) => void;
+  onFilterColumn: (key: string) => void;
+  onRename?: (key: string, label: string) => void;
+  onChangeType?: (key: string, type: ColumnType) => void;
+  onSetIcon?: (key: string, icon: string | undefined) => void;
+  onSetIdPrefix?: (key: string, prefix: string) => void;
+  toggleColumn: (key: string) => void;
   columnConfigOpen: string | null;
   openColumnConfig: (key: string) => void;
   closeColumnConfig: () => void;
@@ -316,13 +281,11 @@ function SortableColumnHeader({
   col,
   width,
   isSortable,
-  filters,
   filterCount,
   hasFilter,
   sort,
   toggleSort,
-  setFilter,
-  clearFilter,
+  onFilterColumn,
   columnConfigOpen,
   openColumnConfig,
   closeColumnConfig,
@@ -334,11 +297,20 @@ function SortableColumnHeader({
   frozen,
   isGroupedBy,
   setGroupBy,
+  toggleColumn,
+  onRename,
+  onChangeType,
+  onSetIcon,
+  onSetIdPrefix,
 }: SortableColumnHeaderProps) {
   const headerRef = useRef<HTMLDivElement | null>(null);
   // Drag-reorder hook. Disabled for non-reorderable columns (actions).
   const sortable = useSortable({ id: col.key, disabled: !reorderable });
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = sortable;
+
+  // The heading plays the icon, not the glyph: a 14px hover target is not a
+  // hover target. Same contract the hand-built animated icons use.
+  const iconRef = useRef<IconHandle>(null);
 
   const style: React.CSSProperties = {
     width,
@@ -351,7 +323,7 @@ function SortableColumnHeader({
           position: "sticky",
           left: 0,
           zIndex: 11,
-          background: "color-mix(in oklab, var(--muted) 60%, var(--background))",
+          background: "var(--muted)",
         }
       : {}),
   };
@@ -387,7 +359,11 @@ function SortableColumnHeader({
       }}
       style={style}
       {...(reorderable ? { ...attributes, ...listeners } : {})}
-      className="relative shrink-0 border-r border-[var(--border)] bg-muted/60 px-3 py-2.5 text-left backdrop-blur-sm last:border-r-0"
+      // The heading drives its own icon. Pointing at a 14px glyph to make it
+      // move is not an interaction anyone can perform on purpose.
+      onMouseEnter={() => iconRef.current?.startAnimation()}
+      onMouseLeave={() => iconRef.current?.stopAnimation()}
+      className="relative shrink-0 border-r border-[var(--border)] bg-muted px-3 py-2.5 text-left last:border-r-0"
       data-col-key={col.key}
     >
       <div className="flex items-center gap-1">
@@ -405,8 +381,17 @@ function SortableColumnHeader({
             hasFilter && "text-primary"
           )}
         >
+          {/* The property's icon, the way Notion labels its columns — the
+              fastest way to see that "Updated" is a date and not text. */}
+          <AnimatedLucide
+            ref={iconRef}
+            name={columnIconName(col) as never}
+            size={14}
+            trigger="manual"
+            className="opacity-70"
+          />
           {col.label}
-          {filterCount > 0 && (
+          {filterCount > 1 && (
             <span className="text-[10px] bg-primary text-primary-foreground rounded-full px-1 min-w-[16px] text-center leading-4">{filterCount}</span>
           )}
           {isSortable && <SortIcon column={col} sort={sort} />}
@@ -440,21 +425,24 @@ function SortableColumnHeader({
         />
       )}
 
-      {/* Column config panel */}
+      {/* The property menu */}
       {columnConfigOpen === col.key && (
-        <ColumnConfigPanel
+        <PropertyMenu
           column={col}
           sort={sort}
           toggleSort={toggleSort}
-          filters={filters}
-          setFilter={setFilter}
-          clearFilter={clearFilter}
+          onFilterColumn={onFilterColumn}
           isWrapped={wrapColumns.has(col.key)}
           toggleWrap={toggleWrap}
-          onClose={closeColumnConfig}
-          anchorRef={headerRef}
           isGroupedBy={isGroupedBy}
           setGroupBy={setGroupBy}
+          toggleColumn={toggleColumn}
+          onRename={onRename}
+          onChangeType={onChangeType}
+          onSetIcon={onSetIcon}
+          onSetIdPrefix={onSetIdPrefix}
+          onClose={closeColumnConfig}
+          anchorRef={headerRef}
         />
       )}
     </div>
@@ -463,16 +451,13 @@ function SortableColumnHeader({
 
 export function ColumnHeaderRow({
   columns,
-  allColumns,
   sort,
   toggleSort,
-  filters,
-  setFilter,
-  clearFilter,
+  rules,
+  onFilterColumn,
   columnConfigOpen,
   openColumnConfig,
   closeColumnConfig,
-  hiddenColumns,
   toggleColumn,
   wrapColumns,
   toggleWrap,
@@ -485,17 +470,11 @@ export function ColumnHeaderRow({
   groupBy,
   setGroupBy,
   selectionHeader,
+  onRename,
+  onChangeType,
+  onSetIcon,
+  onSetIdPrefix,
 }: ColumnHeaderRowProps) {
-
-  // Stable ID for the DndContext. useId() returns the same string on
-  // both server and client renders, which keeps `aria-describedby` in
-  // sync on every sortable column-header button. Without this, dnd-kit
-  // auto-numbers its announcement container per mount, so if any other
-  // DndContext mounts ahead of this one (different counter on each
-  // render pass), the column headers' aria-describedby mismatches and
-  // React 19 logs a hydration warning. Using useId() also handles the
-  // multi-table case cleanly — each ColumnHeaderRow gets its own ID.
-  const dndId = useId();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -524,24 +503,36 @@ export function ColumnHeaderRow({
   // Reorderable items exclude the actions column.
   const reorderableKeys = columns.filter((c) => c.type !== "actions").map((c) => c.key);
 
+  /**
+   * The DndContext's id, which every sortable header points at through
+   * `aria-describedby`.
+   *
+   * Left to itself dnd-kit numbers this per mount, so the server and the
+   * client disagree and React throws the server HTML away. This used to be a
+   * `useId()`, on the belief that useId agrees across the two — it only does
+   * when the component sits at the same place in both trees, and a lazily
+   * imported one does not. The column keys are the same on both sides
+   * whatever wraps the table, so they are what the id is built from.
+   */
+  const dndId = `gf-dnd-${reorderableKeys.join("_")}`;
+
   return (
     <DndContext
-      // useId()-derived ID pins the per-context container reference so
-      // SSR and client agree on every sortable header's
-      // `aria-describedby`. See the `dndId` declaration above for why.
       id={dndId}
       sensors={sensors}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
       <SortableContext items={reorderableKeys} strategy={horizontalListSortingStrategy}>
-        <div className="flex sticky top-0 z-10 border-b border-[var(--border)] shadow-[0_1px_0_0_var(--border),0_4px_10px_-8px_rgb(0_0_0/0.35)] group">
+        <div className="flex sticky top-0 z-10 border-b border-[var(--border)] bg-muted shadow-[0_1px_0_0_var(--border),0_4px_10px_-8px_rgb(0_0_0/0.35)] group">
           {selectionHeader}
           {columns.map((col) => {
             const isSortable = col.sortable !== false && col.type !== "actions";
-            const activeFilter = filters.find((f) => f.key === col.key);
-            const hasFilter = !!activeFilter;
-            const filterCount = hasFilter && Array.isArray(activeFilter.value) ? activeFilter.value.length : 0;
+            // How many of the bar's rules point at this column — so a
+            // heading still says it is filtered, from the one filter model
+            // rather than a second one of its own.
+            const filterCount = rules.filter((r) => r.key === col.key).length;
+            const hasFilter = filterCount > 0;
             const w = columnWidths[col.key] ?? col.width ?? (col.type === "actions" ? 80 : 150);
 
             return (
@@ -550,13 +541,11 @@ export function ColumnHeaderRow({
                 col={col}
                 width={w}
                 isSortable={isSortable}
-                filters={filters}
                 filterCount={filterCount}
                 hasFilter={hasFilter}
                 sort={sort}
                 toggleSort={toggleSort}
-                setFilter={setFilter}
-                clearFilter={clearFilter}
+                onFilterColumn={onFilterColumn}
                 columnConfigOpen={columnConfigOpen}
                 openColumnConfig={openColumnConfig}
                 closeColumnConfig={closeColumnConfig}
@@ -568,6 +557,11 @@ export function ColumnHeaderRow({
                 frozen={!!frozenFirstColumn && col.key === firstNonActionKey}
                 isGroupedBy={groupBy === col.key}
                 setGroupBy={setGroupBy}
+                toggleColumn={toggleColumn}
+                onRename={onRename}
+                onChangeType={onChangeType}
+                onSetIcon={onSetIcon}
+                onSetIdPrefix={onSetIdPrefix}
               />
             );
           })}

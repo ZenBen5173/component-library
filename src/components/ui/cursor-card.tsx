@@ -3,17 +3,38 @@
 import React, { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { motion, useMotionValue, useSpring, AnimatePresence } from "framer-motion";
+import { Slot } from "radix-ui";
 import { cn } from "@/lib/utils";
 
 export interface CursorCardProps {
   children: React.ReactNode;
-  image: string;
-  description: string;
+  /** The picture in the card. Optional when `preview` supplies its own. */
+  image?: string;
+  description?: string;
   href?: string;
   className?: string;
+  /**
+   * Replaces the image-and-caption card entirely. For anything that is not a
+   * photograph — a file that has no thumbnail, a row of stats, a definition.
+   */
+  preview?: React.ReactNode;
+  /**
+   * Render the trigger as the child element rather than wrapping it in the
+   * component's own styled anchor. Without this the caller inherits an anchor
+   * with an orange hover, which is right for prose and wrong everywhere else.
+   */
+  asChild?: boolean;
 }
 
-export function CursorCard({ children, image, description, href = "#", className }: CursorCardProps) {
+export function CursorCard({
+  children,
+  image,
+  description,
+  href = "#",
+  className,
+  preview,
+  asChild,
+}: CursorCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -33,21 +54,29 @@ export function CursorCard({ children, image, description, href = "#", className
     y.set(e.clientY + 20);  // Offset vertically slightly below cursor
   };
 
+  const triggerProps = {
+    onMouseEnter: () => setIsHovered(true),
+    onMouseLeave: () => setIsHovered(false),
+    onMouseMove: handleMouseMove,
+  };
+
   return (
     <>
-      <a
-        href={href}
-        className={cn(
-          "relative inline-block font-bold text-neutral-900 dark:text-neutral-100 transition-colors",
-          "hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded px-1 -mx-1",
-          className
-        )}
-        onMouseEnter={() => setIsHovered(true)}
-        onMouseLeave={() => setIsHovered(false)}
-        onMouseMove={handleMouseMove}
-      >
-        {children}
-      </a>
+      {asChild ? (
+        <Slot.Root {...triggerProps}>{children}</Slot.Root>
+      ) : (
+        <a
+          href={href}
+          className={cn(
+            "relative inline-block font-bold text-neutral-900 dark:text-neutral-100 transition-colors",
+            "hover:bg-orange-100 dark:hover:bg-orange-900/40 rounded px-1 -mx-1",
+            className
+          )}
+          {...triggerProps}
+        >
+          {children}
+        </a>
+      )}
 
       {mounted && typeof document !== "undefined" && createPortal(
         <AnimatePresence>
@@ -66,11 +95,19 @@ export function CursorCard({ children, image, description, href = "#", className
                 "bg-white dark:bg-neutral-900 p-3 shadow-2xl rounded-xl border border-neutral-200 dark:border-neutral-800"
               )}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={image} alt="hover preview" className="w-full h-auto rounded-md mb-3 object-cover" />
-              <p className="text-sm text-neutral-600 dark:text-neutral-400 m-0 leading-relaxed">
-                {description}
-              </p>
+              {preview ?? (
+                <>
+                  {image && (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img src={image} alt="" className="w-full h-auto rounded-md mb-3 object-cover" />
+                  )}
+                  {description && (
+                    <p className="text-sm text-neutral-600 dark:text-neutral-400 m-0 leading-relaxed">
+                      {description}
+                    </p>
+                  )}
+                </>
+              )}
             </motion.div>
           )}
         </AnimatePresence>,

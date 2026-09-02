@@ -6,6 +6,7 @@ A personal **component library**, not an application. `src/registry/` is the poi
 
 ```bash
 npm run dev         # authoring mode, port 3333 — always work here
+                    # restarts itself past 2.8GB; DEV_MEM_LIMIT_MB=0 disables
 npm run typecheck   # run after every change; this catches most breakage
 npm run inventory   # regenerate INVENTORY.md after adding or removing entries
 npm run design      # flag timings and radii that bypass the design scales
@@ -47,6 +48,8 @@ This matters more than usual here — components get rejected on feel.
 - **`npx shadcn add` can overwrite local fixes.** Typecheck after every install.
 - **Third-party registry components are frequently broken** — corrupted files, undeclared deps, imports of hooks and CSS they never ship, install commands whose JSON 404s. Assume repair work, and check hover and animation states rather than trusting that something renders.
 - Restart the dev server after editing `src/lib/registry.ts` or `next.config.ts` — Turbopack holds stale copies of those.
+- **Never read `sessionStorage` or `localStorage` while rendering.** The server has neither, so it draws one thing and the browser draws another and React throws the server's HTML away. Seed state from props, then apply anything remembered in an effect after mount. This has bitten the data table once, silently, and the symptom was a column in the wrong place rather than an obvious error.
+- **Sorting text: reuse one `Intl.Collator`.** `localeCompare` with options builds a collator per call and a sort makes n·log n of them — measured at 7 seconds for fifty thousand rows, versus 276ms with one shared collator.
 
 ## Style
 

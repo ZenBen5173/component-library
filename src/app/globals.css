@@ -1,4 +1,10 @@
 @import "tailwindcss";
+/* The enter/exit utilities (`animate-in`, `fade-in-0`, `zoom-in-95`, the
+   slide-in-from-* family). Ten components in src/components/ui already used
+   these class names — tooltips, dropdowns, dialogs, popovers — and without the
+   package none of the rules existed, so every one of them appeared instantly
+   with no entrance at all. Nothing looked broken, which is why it survived. */
+@import "tw-animate-css";
 
 /* Tailwind v4 skips anything in .gitignore when it auto-detects sources, and
    will not descend into an ignored path from an outer glob either. Several
@@ -445,4 +451,29 @@
 }
 [data-vt-wipe]::view-transition-new(root) {
   z-index: 1;
+}
+
+/* Draws a lucide icon's strokes on, whichever icon it is.
+   Every child shape gets pathLength="1" from AnimatedLucide, so one dash
+   length fits all of them — without it the dash would have to match each
+   path's real length and every icon would need its own numbers. */
+@keyframes icon-draw {
+  from { stroke-dashoffset: 1; }
+  to { stroke-dashoffset: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-icon-draw] * { animation: none !important; stroke-dashoffset: 0 !important; }
+}
+
+/* The table's own scrollbar is drawn by ScrollRail, below the totals row,
+   rather than by the browser between the last row and the totals. The
+   element still scrolls — only the native bar is hidden. */
+.no-native-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-native-scrollbar::-webkit-scrollbar {
+  width: 0;
+  height: 0;
 }

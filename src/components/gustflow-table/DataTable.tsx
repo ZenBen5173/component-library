@@ -1,21 +1,34 @@
 "use client";
 
-import { useRef } from "react";
+import { useRef, useState } from "react";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ClipboardList, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon, X as XIcon } from "lucide-react";
+import { ClipboardList, ChevronLeft, ChevronRight, ChevronDown, ChevronRight as ChevronRightIcon } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Skeleton } from "@/components/ui/skeleton";
 import { EmptyState } from "./shims";
 import { cn } from "@/lib/utils";
 import { TABLE_PAGE_SIZE } from "./shims";
-import type { DataTableProps } from "./types";
+import { operatorsFor, type ColumnType, type DataTableProps } from "./types";
 import { useDataTable } from "./useDataTable";
 import { Toolbar } from "./components/Toolbar";
+import { ScrollRail } from "./components/ScrollRail";
+import { ViewBar } from "./components/ViewBar";
 import { ColumnHeaderRow } from "./components/ColumnHeader";
 import { CellRenderer } from "./components/CellRenderer";
 import { COLUMN_TYPE_REGISTRY } from "./columnTypes";
 import { downloadCsv } from "./exportCsv";
+import { FooterCell } from "./components/FooterCell";
 
 const ROW_HEIGHT = 44;
+/**
+ * How many rows a single group renders before it stops.
+ *
+ * Grouped rows are deliberately not virtualised — the group headers stick
+ * under the column header as you scroll, and absolutely-positioned virtual
+ * rows cannot do that. Ungrouped, the virtualiser bounds the DOM whatever the
+ * row count; grouped, this does, and each group offers to show the rest.
+ */
+const GROUP_ROW_CAP = 200;
 const OVERSCAN = 5;
 const DEFAULT_WIDTH = 150;
 const ACTIONS_WIDTH = 80;
@@ -40,15 +53,17 @@ function PaginationControls({
   page,
   totalPages,
   totalRows,
+  perPage,
   onPageChange,
 }: {
   page: number;
   totalPages: number;
   totalRows: number;
+  perPage: number;
   onPageChange: (p: number) => void;
 }) {
-  const start = (page - 1) * TABLE_PAGE_SIZE + 1;
-  const end = Math.min(page * TABLE_PAGE_SIZE, totalRows);
+  const start = (page - 1) * perPage + 1;
+  const end = Math.min(page * perPage, totalRows);
   const pages = getPageNumbers(page, totalPages);
 
   return (
@@ -83,7 +98,8 @@ function PaginationControls({
               className={cn(
                 "min-w-[28px] h-7 px-1.5 text-xs font-medium rounded-md transition-colors",
                 p === page
-                  ? "bg-primary/15 text-white"
+                  // Was text-white, which vanished against a light page.
+                  ? "bg-primary/15 text-primary"
                   : "text-[var(--muted-foreground)] hover:text-[var(--foreground)] hover:bg-[var(--card)]"
               )}
             >
@@ -120,15 +136,95 @@ export function DataTable({
   onEdit,
   titleKey,
   viewId,
+  rowId = (row) => String(row.id ?? ""),
+  onColumnsChange,
   loading = false,
   emptyState,
   searchable = true,
+  paginated = true,
   frozenFirstColumn = false,
   exportable,
   bulkActions,
+  pageSize = TABLE_PAGE_SIZE,
 }: DataTableProps) {
-  const state = useDataTable(columns, data, viewId);
+  // Seeded from the prop and then owned here, so "rows per page" in the menu
+  // is a live setting rather than something only the consumer can change.
+  const [rowsPerPage, setRowsPerPage] = useState(pageSize);
+
+  /**
+   * Which panel the toolbar just asked for.
+   *
+   * The panels live on the chips in the bar below, and a chip does not exist
+   * until its first rule does — so the toolbar's icons create that first entry
+   * and name the panel, which then opens as it appears.
+   */
+  const [openPanel, setOpenPanel] = useState<{ panel: "sort" | "filter"; n: number } | null>(null);
+  const askFor = (panel: "sort" | "filter") =>
+    setOpenPanel((prev) => ({ panel, n: (prev?.n ?? 0) + 1 }));
+
+  /** Start a filter on one column, from wherever the request came from. */
+  const filterColumn = (key: string) => {
+    const column = columns.find((c) => c.key === key);
+    if (!column) return;
+    state.setRules([
+      ...state.rules,
+      {
+        id: `r${Date.now().toString(36)}${state.rules.length}`,
+        key,
+        op: operatorsFor(column.type)[0]!.value,
+        value: "",
+      },
+    ]);
+    askFor("filter");
+  };
+
+  const state = useDataTable(columns, data, {
+    viewId,
+    pageSize: rowsPerPage,
+    paginated,
+    rowId,
+  });
   const scrollRef = useRef<HTMLDivElement>(null);
+  const footerViewportRef = useRef<HTMLDivElement>(null);
+
+  /** Keeps the totals row lined up with the columns above it. */
+  const syncFooterScroll = () => {
+    const viewport = footerViewportRef.current;
+    if (viewport && scrollRef.current) {
+      viewport.scrollLeft = scrollRef.current.scrollLeft;
+    }
+  };
+
+  // Both edit the column list rather than the view, so they exist only when
+  // the consumer has somewhere to keep the result.
+  const onRename = onColumnsChange
+    ? (key: string, label: string) =>
+        onColumnsChange(columns.map((c) => (c.key === key ? { ...c, label } : c)))
+    : undefined;
+
+  const onSetIcon = onColumnsChange
+    ? (key: string, icon: string | undefined) =>
+        onColumnsChange(columns.map((c) => (c.key === key ? { ...c, icon } : c)))
+    : undefined;
+
+  const onSetIdPrefix = onColumnsChange
+    ? (key: string, idPrefix: string) =>
+        onColumnsChange(columns.map((c) => (c.key === key ? { ...c, idPrefix } : c)))
+    : undefined;
+
+  const onChangeType = onColumnsChange
+    ? (key: string, type: ColumnType) =>
+        onColumnsChange(
+          columns.map((c) =>
+            c.key === key
+              ? // A filter written against the old type rarely means anything
+                // under the new one, and an aggregate over what is now text
+                // means nothing at all.
+                { ...c, type, aggregate: type === "number" ? c.aggregate : undefined }
+              : c,
+          ),
+        )
+    : undefined;
   // Sprint 4.3 — first non-actions column key (used by both the header
   // row and the body for the freeze styling).
   const frozenKey = frozenFirstColumn
@@ -151,7 +247,7 @@ export function DataTable({
   }, 40 + (showSelectionCol ? SELECTION_COL_WIDTH : 0)); // 40px for the ··· column
 
   // Section J7 polish — per-row checkbox cell.
-  const renderRowCheckbox = (rowId: string) => {
+  const renderRowCheckbox = (id: string) => {
     if (!showSelectionCol) return null;
     return (
       <div
@@ -159,18 +255,95 @@ export function DataTable({
         style={{ width: SELECTION_COL_WIDTH }}
         onClick={(e) => e.stopPropagation()}
       >
-        <input
-          type="checkbox"
-          checked={state.selectedIds.has(rowId)}
-          onChange={() => state.toggleSelected(rowId)}
+        <Checkbox
+          aria-label="Select row"
+          checked={state.selectedIds.has(id)}
+          onCheckedChange={() => state.toggleSelected(id)}
+          animateIn={false}
         />
       </div>
     );
   };
 
-  const showVirtualized = !loading && state.paginatedData.length > 0;
   const clickable = typeof onRowClick === "function";
-  const showPagination = state.processedData.length > TABLE_PAGE_SIZE;
+
+  // Tri-state: a dash when only some of the page is ticked, which a plain
+  // boolean cannot say — it would read as "none selected".
+  const selectedOnPage = state.paginatedData.filter((r) =>
+    state.selectedIds.has(rowId(r)),
+  ).length;
+  const pageSelection: boolean | "indeterminate" =
+    selectedOnPage === 0
+      ? false
+      : selectedOnPage === state.paginatedData.length
+        ? true
+        : "indeterminate";
+
+  // Groups the user has asked to see in full, past GROUP_ROW_CAP.
+  const [shownInFull, setShownInFull] = useState<Set<string>>(new Set());
+
+  /**
+   * One row's cells. Shared by the grouped and virtualised bodies, which
+   * otherwise held the same forty lines twice and drifted apart.
+   */
+  const renderCells = (row: Record<string, unknown>) => (
+    <>
+      {renderRowCheckbox(rowId(row))}
+      {state.orderedColumns.map((col) => {
+        const w = getColWidth(col, state.columnWidths);
+        const value = row[col.key];
+        const isEditable = (col.editable ?? COLUMN_TYPE_REGISTRY[col.type].defaultEditable) && !!onEdit;
+        const isFrozen = frozenKey === col.key;
+        return (
+          <div
+            key={col.key}
+            data-col-key={col.key}
+            // overflow-hidden is what stops a cell writing into its
+            // neighbour. Without it a wide value — a file chip, a long link —
+            // simply carries on past the column edge and lands on top of the
+            // next column's text, which is what "wrap" appeared to be
+            // breaking: the wrapping was fine, the containment was missing.
+            className="shrink-0 overflow-hidden border-r border-[var(--border)] px-3 py-2.5 text-[var(--foreground)] last:border-r-0"
+            style={{
+              width: w,
+              minWidth: 80,
+              ...(isFrozen
+                ? {
+                    position: "sticky",
+                    left: 0,
+                    zIndex: 5,
+                    background: "var(--background)",
+                    boxShadow: "inset -1px 0 0 var(--border)",
+                  }
+                : {}),
+            }}
+          >
+            <CellRenderer
+              column={col}
+              value={value}
+              row={row}
+              isWrapped={state.wrapColumns.has(col.key)}
+              onEdit={isEditable && onEdit ? (newValue) => onEdit(rowId(row), col.key, newValue) : undefined}
+              onRowClick={clickable ? onRowClick! : undefined}
+              isTitleColumn={titleKey ? col.key === titleKey : col.type === "title"}
+            />
+          </div>
+        );
+      })}
+    </>
+  );
+
+  // Any column with a calculation chosen, plus room to choose one: the
+  // row is always there for a numeric table so there is somewhere to click.
+  const hasFooter =
+    state.orderedColumns.some((c) => state.aggregates[c.key]) ||
+    state.orderedColumns.some((c) => c.type === "number");
+
+  const showVirtualized = !loading && state.paginatedData.length > 0;
+  // Grouped rows are rendered whole, not by the page — so the pager, which
+  // would sit underneath claiming "showing 1–25 of 1000", is hidden with them.
+  const showPagination =
+    paginated && !state.groupBy && state.processedData.length > rowsPerPage;
 
   return (
     <div>
@@ -181,17 +354,31 @@ export function DataTable({
           setSearch={state.setSearch}
           searchOpen={state.searchOpen}
           toggleSearchOpen={state.toggleSearchOpen}
-          hasActiveFilters={state.hasActiveFilters}
-          clearAllFilters={state.clearAllFilters}
           allColumns={columns}
           hiddenColumns={state.hiddenColumns}
           toggleColumn={state.toggleColumn}
-          groupByLabel={
-            state.groupBy
-              ? state.orderedColumns.find((c) => c.key === state.groupBy)?.label ?? state.groupBy
-              : null
-          }
-          clearGroupBy={() => state.setGroupBy(null)}
+          columnOrder={state.columnOrder}
+          setColumnOrder={state.setColumnOrder}
+          hasSort={state.sort.length > 0}
+          hasFilters={state.rules.length > 0}
+          onOpenSort={() => {
+            if (state.sort.length === 0) {
+              const first = columns.find(
+                (c) => c.sortable !== false && c.type !== "actions",
+              );
+              if (first) state.setSort([{ key: first.key, dir: "asc" }]);
+            }
+            askFor("sort");
+          }}
+          onOpenFilter={() => {
+            if (state.rules.length === 0) {
+              const first = columns.find(
+                (c) => c.filterable !== false && c.type !== "actions",
+              );
+              if (first) return filterColumn(first.key);
+            }
+            askFor("filter");
+          }}
           onExportCsv={
             exportable
               ? () => {
@@ -201,70 +388,48 @@ export function DataTable({
                 }
               : undefined
           }
+          pageSize={rowsPerPage}
+          onPageSizeChange={paginated ? setRowsPerPage : undefined}
           selectedCount={bulkActions ? state.selectedIds.size : 0}
           onClearSelection={bulkActions ? () => state.clearSelection() : undefined}
           onSelectAll={bulkActions ? state.selectAllInView : undefined}
-          savedViews={viewId ? state.savedViews.map((v) => ({ id: v.id, name: v.name, is_default: v.is_default })) : undefined}
-          onApplyView={
-            viewId
-              ? (vId: string) => {
-                  const v = state.savedViews.find((sv) => sv.id === vId);
-                  if (v) state.applyViewConfig(v.config);
-                }
-              : undefined
-          }
-          onSaveCurrentAsView={
-            viewId
-              ? async (name: string, asDefault: boolean) => {
-                  const config = state.currentViewConfig();
-                  const res = await fetch(`/api/data-table-views`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ table_key: viewId, name, config, is_default: asDefault }),
-                  });
-                  if (res.ok) {
-                    const { view } = await res.json();
-                    // Insert + dedupe default flag locally so the dropdown reflects the change
-                    // without a re-fetch.
-                    void state.refetchSavedViews();
-                    void view; // referenced so the linter doesnt fuss about unused destructure
-                  }
-                }
-              : undefined
-          }
-          onSetDefaultView={
-            viewId
-              ? async (vId: string, isDefault: boolean) => {
-                  await fetch(`/api/data-table-views/${vId}`, {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ is_default: isDefault }),
-                  });
-                  void state.refetchSavedViews();
-                }
-              : undefined
-          }
-          onDeleteView={
-            viewId
-              ? async (vId: string) => {
-                  await fetch(`/api/data-table-views/${vId}`, { method: "DELETE" });
-                  void state.refetchSavedViews();
-                }
-              : undefined
-          }
-          viewType={state.viewType}
-          setViewType={state.setViewType}
           onBulkDelete={
             bulkActions?.onDelete
               ? async () => {
                   const ids = Array.from(state.selectedIds);
                   if (ids.length === 0) return;
-                  if (!confirm(`Delete ${ids.length} selected row${ids.length === 1 ? "" : "s"}? This can't be undone.`)) return;
+                  // window.confirm blocks the tab and looks like nothing else
+                  // in the app; it is only the fallback.
+                  const ask =
+                    bulkActions.confirmDelete ??
+                    ((count: number) =>
+                      window.confirm(
+                        `Delete ${count} selected row${count === 1 ? "" : "s"}? This can't be undone.`,
+                      ));
+                  if (!(await ask(ids.length))) return;
                   await bulkActions.onDelete!(ids);
                   state.clearSelection();
                 }
               : undefined
           }
+        />
+      )}
+
+      {/* What is applied to the table right now, and where to change it. */}
+      {state.viewType === "table" && (
+        <ViewBar
+          columns={columns}
+          sort={state.sort}
+          setSort={state.setSort}
+          rules={state.rules}
+          setRules={state.setRules}
+          conjunction={state.conjunction}
+          setConjunction={state.setConjunction}
+          groupByColumn={
+            state.groupBy ? columns.find((c) => c.key === state.groupBy) ?? null : null
+          }
+          clearGroupBy={() => state.setGroupBy(null)}
+          openPanel={openPanel}
         />
       )}
 
@@ -275,10 +440,21 @@ export function DataTable({
       {state.viewType === "table" && (
       <div
         ref={scrollRef}
-        className="w-full rounded-lg border border-[var(--border)] text-sm overflow-auto"
-        style={{ maxHeight: "min(600px, 70vh)", minWidth: 0 }}
+        onScroll={syncFooterScroll}
+        className={cn(
+          "no-native-scrollbar w-full border border-[var(--border)] text-sm overflow-x-auto",
+          // Paged, the body is exactly as tall as its rows, so there is
+          // nothing to scroll vertically and no bar down the side. Unpaged, it
+          // holds the whole result set and has to scroll — the virtualiser
+          // needs a scroll container to measure against.
+          paginated ? "overflow-y-hidden" : "overflow-y-auto",
+          hasFooter ? "rounded-t-lg border-b-0" : "rounded-lg",
+        )}
+        style={{
+          ...(paginated ? {} : { maxHeight: "min(600px, 70vh)" }),
+          minWidth: 0,
+        }}
       >
-        {/* Inner sizer */}
         <div style={{ minWidth: totalMinWidth }}>
           {/* Sticky header */}
           <ColumnHeaderRow
@@ -288,29 +464,23 @@ export function DataTable({
                   className="shrink-0 flex items-center justify-center px-2 border-r border-[var(--border)]"
                   style={{ width: SELECTION_COL_WIDTH }}
                 >
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     aria-label="Select all on this page"
-                    checked={
-                      state.paginatedData.length > 0 &&
-                      state.paginatedData.every((r) => state.selectedIds.has(r.id as string))
-                    }
-                    onChange={() => state.toggleAllOnPage()}
+                    checked={pageSelection}
+                    onCheckedChange={() => state.toggleAllOnPage()}
+                    animateIn={false}
                   />
                 </div>
               ) : undefined
             }
             columns={state.orderedColumns}
-            allColumns={columns}
             sort={state.sort}
             toggleSort={state.toggleSort}
-            filters={state.filters}
-            setFilter={state.setFilter}
-            clearFilter={state.clearFilter}
+            rules={state.rules}
+            onFilterColumn={filterColumn}
             columnConfigOpen={state.columnConfigOpen}
             openColumnConfig={state.openColumnConfig}
             closeColumnConfig={state.closeColumnConfig}
-            hiddenColumns={state.hiddenColumns}
             toggleColumn={state.toggleColumn}
             wrapColumns={state.wrapColumns}
             toggleWrap={state.toggleWrap}
@@ -322,6 +492,10 @@ export function DataTable({
             bodyRef={scrollRef}
             groupBy={state.groupBy}
             setGroupBy={state.setGroupBy}
+            onRename={onRename}
+            onChangeType={onChangeType}
+            onSetIcon={onSetIcon}
+            onSetIdPrefix={onSetIdPrefix}
           />
 
           {/* Body */}
@@ -352,74 +526,51 @@ export function DataTable({
               />
             )
           ) : state.groupBy ? (
-            // Sprint 5.5 — grouped render. Skips virtualization (the
-            // overhead of computing per-group offsets isn't worth it
-            // for typical group counts; the linear render is fine for
-            // tables under a few thousand rows). Each group renders a
-            // sticky header bar + collapsible rows.
+            // Sprint 5.5 — grouped render. Sticky group header bars plus
+            // collapsible rows; each group renders at most GROUP_ROW_CAP rows
+            // and offers the rest behind a click, so grouping by something
+            // high-volume cannot drop ten thousand rows into the document.
             <div>
               {state.groups.map((group) => {
                 const collapsed = state.collapsedGroups.has(group.value);
                 const groupColLabel = state.orderedColumns.find((c) => c.key === state.groupBy)?.label ?? state.groupBy;
+                const uncapped = shownInFull.has(group.value);
+                const rows = uncapped ? group.rows : group.rows.slice(0, GROUP_ROW_CAP);
+                const withheld = group.rows.length - rows.length;
                 return (
                   <div key={group.value}>
                     <button
                       type="button"
                       onClick={() => state.toggleGroup(group.value)}
-                      className="flex items-center gap-2 w-full px-3 py-2 bg-muted/60 border-y border-[var(--border)] text-left text-xs font-medium hover:bg-muted transition-colors sticky top-[42px] z-[6]"
+                      className="flex items-center gap-2 w-full px-3 py-2 bg-muted border-y border-[var(--border)] text-left text-xs font-medium hover:bg-accent transition-colors sticky top-[42px] z-[6]"
                     >
                       {collapsed ? <ChevronRightIcon className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
                       <span className="text-xs uppercase font-medium text-[var(--muted-foreground)]">{groupColLabel}:</span>
                       <span className="text-sm font-semibold text-[var(--foreground)]">{group.value}</span>
                       <span className="text-xs text-[var(--muted-foreground)]">({group.rows.length})</span>
                     </button>
-                    {!collapsed && group.rows.map((row, rIdx) => (
+                    {!collapsed && rows.map((row, rIdx) => (
                       <div
-                        key={(row.id as string) ?? `${group.value}-${rIdx}`}
+                        key={rowId(row) || `${group.value}-${rIdx}`}
                         className={cn(
                           "flex border-t border-[var(--border)] transition-colors",
                           "hover:bg-muted/40"
                         )}
                       >
-                        {renderRowCheckbox(row.id as string)}
-                        {state.orderedColumns.map((col) => {
-                          const w = getColWidth(col, state.columnWidths);
-                          const value = row[col.key];
-                          const isEditable = (col.editable ?? COLUMN_TYPE_REGISTRY[col.type].defaultEditable) && !!onEdit;
-                          const isFrozen = frozenKey === col.key;
-                          return (
-                            <div
-                              key={col.key}
-                              data-col-key={col.key}
-                              className="shrink-0 border-r border-[var(--border)] px-3 py-2.5 text-[var(--foreground)] last:border-r-0"
-                              style={{
-                                width: w,
-                                minWidth: 80,
-                                ...(isFrozen
-                                  ? {
-                                      position: "sticky",
-                                      left: 0,
-                                      zIndex: 5,
-                                      background: "var(--background)",
-                                      boxShadow: "inset -1px 0 0 var(--border)",
-                                    }
-                                  : {}),
-                              }}
-                            >
-                              <CellRenderer
-                                column={col}
-                                value={value}
-                                row={row}
-                                isWrapped={state.wrapColumns.has(col.key)}
-                                onEdit={isEditable && onEdit ? (newValue) => onEdit((row.id as string), col.key, newValue) : undefined}
-                                onRowClick={clickable ? onRowClick! : undefined}
-                                isTitleColumn={titleKey ? col.key === titleKey : col.type === "title"}
-                              />
-                            </div>
-                          );
-                        })}
+                        {renderCells(row)}
                       </div>
                     ))}
+                    {!collapsed && withheld > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShownInFull((prev) => new Set(prev).add(group.value))
+                        }
+                        className="w-full border-t border-[var(--border)] px-3 py-2.5 text-left text-xs text-[var(--muted-foreground)] transition-colors hover:bg-muted/40 hover:text-[var(--foreground)]"
+                      >
+                        Show {withheld.toLocaleString()} more in {group.value}
+                      </button>
+                    )}
                   </div>
                 );
               })}
@@ -431,7 +582,7 @@ export function DataTable({
                 if (!row) return null; // virtualRow.index always within bounds, but defend
                 return (
                   <div
-                    key={(row.id as string) ?? virtualRow.index}
+                    key={rowId(row) || virtualRow.index}
                     data-index={virtualRow.index}
                     ref={virtualizer.measureElement}
                     className={cn(
@@ -446,43 +597,7 @@ export function DataTable({
                       transform: `translateY(${virtualRow.start}px)`,
                     }}
                   >
-                    {renderRowCheckbox(row.id as string)}
-                    {state.orderedColumns.map((col) => {
-                      const w = getColWidth(col, state.columnWidths);
-                      const value = row[col.key];
-                      const isEditable = (col.editable ?? COLUMN_TYPE_REGISTRY[col.type].defaultEditable) && !!onEdit;
-                      const isFrozen = frozenKey === col.key;
-                      return (
-                        <div
-                          key={col.key}
-                          data-col-key={col.key}
-                          className="shrink-0 border-r border-[var(--border)] px-3 py-2.5 text-[var(--foreground)] last:border-r-0"
-                          style={{
-                            width: w,
-                            minWidth: 80,
-                            ...(isFrozen
-                              ? {
-                                  position: "sticky",
-                                  left: 0,
-                                  zIndex: 5,
-                                  background: "var(--background)",
-                                  boxShadow: "inset -1px 0 0 var(--border)",
-                                }
-                              : {}),
-                          }}
-                        >
-                          <CellRenderer
-                            column={col}
-                            value={value}
-                            row={row}
-                            isWrapped={state.wrapColumns.has(col.key)}
-                            onEdit={isEditable && onEdit ? (newValue) => onEdit((row.id as string), col.key, newValue) : undefined}
-                            onRowClick={clickable ? onRowClick! : undefined}
-                            isTitleColumn={titleKey ? col.key === titleKey : col.type === "title"}
-                          />
-                        </div>
-                      );
-                    })}
+                    {renderCells(row)}
                   </div>
                 );
               })}
@@ -490,28 +605,35 @@ export function DataTable({
           ) : null}
         </div>
 
-        {/* Section J2 — aggregation footer. Only renders when at least
-            one column has an `aggregate` configured. Sticky to the bottom
-            of the table body so it stays visible while scrolling. */}
-        {(() => {
-          const anyAgg = state.orderedColumns.some((c) => c.aggregate);
-          if (!anyAgg) return null;
-          return (
-            <div className="flex border-t-2 border-[var(--border)] bg-[var(--card)] sticky bottom-0 z-10 font-medium text-xs">
+      </div>
+      )}
+
+      {/* The totals row, below the scroller rather than stuck to its bottom
+          edge inside it.
+
+          Sticky-inside meant rows slid underneath it and were clipped in
+          half at the end of the list — the row was not cut off so much as
+          covered. Out here it can never overlap anything. It cannot share
+          the body's horizontal scrollbar from out here either, so its
+          scroll position is driven from the body's: overflow-x hidden still
+          makes a scroll container, which keeps a frozen first column
+          working, and hides the second scrollbar that would otherwise
+          appear under the first. */}
+      {state.viewType === "table" && hasFooter && (
+        <div
+          ref={footerViewportRef}
+          className="no-native-scrollbar w-full overflow-x-hidden rounded-b-lg border border-[var(--border)] text-sm"
+        >
+          <div style={{ minWidth: totalMinWidth }}>
+            <div className="group/footer flex bg-[var(--card)] font-medium text-xs">
               {showSelectionCol && (
                 <div className="shrink-0" style={{ width: SELECTION_COL_WIDTH }} />
               )}
               {state.orderedColumns.map((col) => {
                 const w = getColWidth(col, state.columnWidths);
                 const isFrozen = frozenKey === col.key;
-                const value = col.aggregate ? state.footerValues[col.key] : null;
-                const aggLabel =
-                  col.aggregate === "sum" ? "Σ"
-                  : col.aggregate === "avg" ? "x̄"
-                  : col.aggregate === "count" ? "#"
-                  : col.aggregate === "min" ? "min"
-                  : col.aggregate === "max" ? "max"
-                  : "";
+                const agg = state.aggregates[col.key];
+                const value = agg ? state.footerValues[col.key] : null;
                 return (
                   <div
                     key={col.key}
@@ -530,19 +652,24 @@ export function DataTable({
                         : {}),
                     }}
                   >
-                    {value != null ? (
-                      <span className="inline-flex items-center gap-1.5">
-                        <span className="text-[10px] uppercase tracking-wide text-[var(--muted-foreground)]">{aggLabel}</span>
-                        <span>{value}</span>
-                      </span>
-                    ) : null}
+                    <FooterCell
+                      column={col}
+                      aggregate={agg}
+                      value={value}
+                      onChange={(next) => state.setAggregate(col.key, next)}
+                    />
                   </div>
                 );
               })}
             </div>
-          );
-        })()}
-      </div>
+          </div>
+        </div>
+      )}
+
+      {/* The horizontal scrollbar, below the totals rather than cutting
+          across the table above them. */}
+      {state.viewType === "table" && (
+        <ScrollRail targetRef={scrollRef} className="mt-1" />
       )}
 
       {/* Pagination — only shows in table view. */}
@@ -551,6 +678,7 @@ export function DataTable({
           page={state.page}
           totalPages={state.totalPages}
           totalRows={state.resultCount}
+          perPage={rowsPerPage}
           onPageChange={state.setPage}
         />
       )}

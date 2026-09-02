@@ -41,7 +41,10 @@ export const MarqueeFade = ({
 }: MarqueeFadeProps) => (
   <div
     className={cn(
-      "absolute top-0 bottom-0 z-10 h-full w-24 from-background to-transparent",
+      // pointer-events-none matters: these are two 96px strips sitting on
+      // top at z-10, and without it they swallow every click landing under
+      // them — including on the logos they are fading out.
+      "pointer-events-none absolute top-0 bottom-0 z-10 h-full w-24 from-background to-transparent",
       side === "left" ? "left-0 bg-gradient-to-r" : "right-0 bg-gradient-to-l",
       className
     )}

@@ -3,21 +3,27 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { motion } from "motion/react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Play } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { DURATION, EASE } from "@/lib/motion";
 
 /**
- * A card that renders the component itself rather than describing it.
+ * A card that shows the component itself — but only the one you are pointing
+ * at.
  *
- * The thumbnail is a real iframe of the preview route, scaled down — the same
+ * Every thumbnail is a real iframe of the preview route, scaled down: the same
  * trick PreviewFrame uses, for the same reason: a component gated behind `lg:`
- * needs a genuine 1280px viewport, so we render at full width and shrink the
- * result instead of squeezing the layout.
+ * needs a genuine 1280px viewport, so it renders at full width and the result
+ * is shrunk rather than the layout squeezed.
  *
- * Iframes are expensive, so none mount until they're near the viewport, and
- * arrivals are staggered — twenty pages compiling at once makes the whole grid
- * judder on first scroll.
+ * They used to mount on approach and stay mounted, which does not survive a
+ * library this size. Each is a whole application, and fourteen entries drive
+ * canvas or WebGL; browsers permit only a handful of live WebGL contexts and
+ * past that they tear them down and rebuild them, which seizes the page
+ * instead of slowing it. Scrolling the gallery could leave it unusable.
+ *
+ * So nothing runs until you hover. At most one preview is ever live, which is
+ * the only version of this that stays responsive at seventy-five components.
  */
 const FRAME_WIDTH = 1280;
 const WELL_HEIGHT = 190;
@@ -36,90 +42,34 @@ export function EntryCard({ entry, index }: { entry: CardEntry; index: number })
   const [live, setLive] = useState(false);
   const [loaded, setLoaded] = useState(false);
   const [width, setWidth] = useState(0);
+  const retire = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
   useEffect(() => {
     const el = wellRef.current;
     if (!el) return;
-
     setWidth(el.clientWidth);
     const ro = new ResizeObserver(() => setWidth(el.clientWidth));
     ro.observe(el);
-
-    let stagger: ReturnType<typeof setTimeout>;
-    let watchdog: ReturnType<typeof setTimeout>;
-    let scrolling = false;
-    let done = false;
-
-    const near = () => {
-      const r = el.getBoundingClientRect();
-      return r.top < window.innerHeight + 400 && r.bottom > -400;
-    };
-
-    const detach = () => {
-      if (scrolling) window.removeEventListener("scroll", onScroll, true);
-      scrolling = false;
-    };
-
-    const go = () => {
-      if (done) return;
-      done = true;
-      detach();
-      // Stagger within the batch that scrolls in together.
-      stagger = setTimeout(() => setLive(true), (index % 6) * 140);
-    };
-
-    function onScroll() {
-      if (near()) go();
-    }
-
-    let fired = false;
-    let retire: ReturnType<typeof setTimeout>;
-
-    // Mount on approach, unmount once well past. Keeping every thumbnail
-    // alive once loaded is what made the gallery seize: each is a whole app,
-    // and fourteen entries run canvas or WebGL. Browsers allow only a handful
-    // of live WebGL contexts, and past that they start tearing down and
-    // rebuilding them, which stalls the page rather than degrading it.
-    const io = new IntersectionObserver(
-      ([e]) => {
-        fired = true;
-        if (e.isIntersecting) {
-          clearTimeout(retire);
-          done = false;
-          go();
-          return;
-        }
-        // A grace period, so scrolling past does not thrash mount/unmount.
-        clearTimeout(retire);
-        retire = setTimeout(() => {
-          setLive(false);
-          setLoaded(false);
-        }, 2500);
-      },
-      { rootMargin: "400px" },
-    );
-    io.observe(el);
-
-    // IntersectionObserver rides the rendering lifecycle, and some embedded
-    // views never composite — there the callback simply never arrives and the
-    // whole grid would sit on skeletons. Fall back to measuring directly.
-    watchdog = setTimeout(() => {
-      if (fired || done) return;
-      io.disconnect();
-      if (near()) return go();
-      window.addEventListener("scroll", onScroll, true);
-      scrolling = true;
-    }, 1200);
-
     return () => {
-      io.disconnect();
       ro.disconnect();
-      detach();
-      clearTimeout(stagger);
-      clearTimeout(watchdog);
-      clearTimeout(retire);
+      clearTimeout(retire.current);
     };
-  }, [index]);
+  }, []);
+
+  const wake = () => {
+    clearTimeout(retire.current);
+    setLive(true);
+  };
+
+  const sleep = () => {
+    // A grace period, so brushing across a grid does not mount and unmount a
+    // dozen previews on the way through.
+    clearTimeout(retire.current);
+    retire.current = setTimeout(() => {
+      setLive(false);
+      setLoaded(false);
+    }, 400);
+  };
 
   const frameHeight = entry.height === "screen" ? 800 : entry.height;
   const scale = width ? width / FRAME_WIDTH : 0;
@@ -136,6 +86,10 @@ export function EntryCard({ entry, index }: { entry: CardEntry; index: number })
     >
       <Link
         href={`/${entry.category}/${entry.slug}`}
+        onPointerEnter={wake}
+        onPointerLeave={sleep}
+        onFocus={wake}
+        onBlur={sleep}
         className="group block overflow-hidden rounded-xl border border-g-line bg-g-surface transition-[border-color,transform] duration-200 hover:-translate-y-0.5 hover:border-g-brand"
       >
         <div
@@ -157,14 +111,21 @@ export function EntryCard({ entry, index }: { entry: CardEntry; index: number })
                 transformOrigin: "top left",
               }}
               className={cn(
-                "pointer-events-none absolute left-0 top-0 border-0 transition-opacity duration-500",
+                "pointer-events-none absolute left-0 top-0 border-0 transition-opacity duration-300",
                 loaded ? "opacity-100" : "opacity-0",
               )}
             />
           )}
 
+          {/* At rest: the name, and an invitation. Cheaper than a screenshot
+              and honest about the fact that nothing is running yet. */}
           {!loaded && (
-            <div className="absolute inset-0 animate-pulse bg-gradient-to-br from-g-surface via-g-canvas to-g-surface" />
+            <div className="absolute inset-0 grid place-items-center bg-gradient-to-br from-g-surface via-g-canvas to-g-surface">
+              <span className="flex items-center gap-1.5 text-[11px] text-g-dim transition-opacity duration-200 group-hover:opacity-0">
+                <Play size={11} />
+                Hover to run
+              </span>
+            </div>
           )}
 
           {/* Keeps busy previews from fighting the card's own text. */}

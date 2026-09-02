@@ -1,6 +1,6 @@
 # Component Inventory
 
-**72 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**73 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -91,7 +91,7 @@
 | [Aurora Hero](src/registry/heroes/aurora-hero.tsx) | Full-bleed aurora gradient with a glass-displacement title and a background-mode switch. | portfolio, hero, gradient, glass, animated |
 | [Perspective Grid](src/registry/heroes/perspective-grid.tsx) | Tilted 3D tile grid that fades out at the edges; tiles light up under the cursor and fade back over 1.5s. | portfolio, hero, 3d, grid, background, cool |
 
-## Navigation (8)
+## Navigation (9)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -101,7 +101,8 @@
 | [Mega Menu Navbar](src/registry/navigation/mega-menu-navbar.tsx) | Sticky top bar whose panels expand into a mega menu — a promo sidebar card plus grouped link columns. | navigation, navbar, mega-menu, saas, website |
 | [Page Transitions](src/registry/navigation/page-transitions.tsx) | Four ways one page can hand over to the next — fade, slide, a wipe curtain, and a masked reveal. | page-transition, navigation, portfolio, motion, must-have |
 | [Search Modal](src/registry/navigation/search-modal.tsx) | Collapsed search bar that expands into a full command palette — filter tags, grouped results, ⌘K. | navigation, search, modal, command-palette, hotkey |
-| [Sidebar 2.0](src/registry/navigation/sidebar-2.tsx) | shadcn's sidebar with a highlight that slides between items instead of cutting, nested sections that open in place, a workspace switcher and a user row. | sidebar, navigation, app, shell, sliding-indicator, must-have |
+| [Sidebar 2.0](src/registry/navigation/sidebar-2.tsx) | The stock sidebar with one change: the hover highlight glides from item to item instead of cutting in and out. | sidebar, navigation, app, shell, hover, sliding-indicator, must-have |
+| [Sidebar](src/registry/navigation/sidebar.tsx) | shadcn's sidebar as it ships — workspace switcher, grouped nav with nested sections, user row, and a rail that collapses to icons. | sidebar, navigation, app, shell |
 | [Spotlight Navbar](src/registry/navigation/spotlight-navbar.tsx) | Nav links lit by a sliding spotlight that tracks the hovered item and settles on the active one. | navigation, navbar, spotlight, hover |
 
 ## Sections (9)

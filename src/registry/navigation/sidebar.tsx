@@ -1,16 +1,14 @@
 "use client";
 
 /**
- * @name Sidebar 2.0
- * @description The stock sidebar with one change: the hover highlight glides from item to item instead of cutting in and out.
- * @tags sidebar, navigation, app, shell, hover, sliding-indicator, must-have
+ * @name Sidebar
+ * @description shadcn's sidebar as it ships — workspace switcher, grouped nav with nested sections, user row, and a rail that collapses to icons.
+ * @tags sidebar, navigation, app, shell
  * @height 640
- * @deps motion
- * @note Sidebar is the baseline; this is that with the hover made continuous. One `layoutId` shared by every row, rendered only inside the hovered one — moving the pointer animates that same element across rather than fading one out and another in. The component's own instant hover fill has to be switched off or you see both at once. The group clears on pointer leave so the highlight does not sit on whichever row you exited through.
+ * @note The stock component, unmodified, so there is a baseline to compare against. Sidebar 2.0 is this with a highlight that follows the pointer. Radix under the hood, like the rest of the library — the two Animate UI sidebars are not redistributable and do not ship.
  * @source src/components/ui/sidebar.tsx
  */
 import { useState } from "react";
-import { motion } from "motion/react";
 import {
   ChevronRight,
   ChevronsUpDown,
@@ -41,10 +39,8 @@ import {
   SidebarMenuSubItem,
   SidebarProvider,
   SidebarTrigger,
-  useSidebar,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { SPRING } from "@/lib/motion";
 import { cn } from "@/lib/utils";
 
 const NAV = [
@@ -79,40 +75,14 @@ const NAV = [
   { id: "settings", title: "Settings", icon: Settings2, children: [] },
 ];
 
-/**
- * The travelling hover.
- *
- * Rendered only inside the row the pointer is over, and every row shares the
- * same layoutId — so moving to the next row moves this element there rather
- * than unmounting it here and mounting a new one over there. That is the
- * whole difference between a highlight that slides and one that blinks.
- */
-function Glide() {
-  const { state } = useSidebar();
-  // Nothing to slide along at icon width.
-  if (state === "collapsed") return null;
-  return (
-    <motion.span
-      layoutId="sidebar-glide"
-      transition={SPRING.default}
-      className="absolute inset-0 -z-10 rounded-md bg-sidebar-accent"
-    />
-  );
-}
-
-export default function Sidebar2Demo() {
+export default function SidebarDemo() {
   const [active, setActive] = useState("history");
   const [open, setOpen] = useState<string[]>(["playground"]);
-  const [hovered, setHovered] = useState<string | null>(null);
 
   const toggle = (id: string) =>
     setOpen((prev) =>
       prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id],
     );
-
-  // Suppresses the component's built-in hover fill. Left in, it paints
-  // instantly underneath the gliding one and you see both.
-  const noInstantHover = "relative hover:bg-transparent";
 
   return (
     <div className="h-[640px] w-full bg-background">
@@ -143,12 +113,12 @@ export default function Sidebar2Demo() {
             <SidebarGroup>
               <SidebarGroupLabel>Platform</SidebarGroupLabel>
               <SidebarGroupContent>
-                {/* Clears on leave, so the highlight does not stay lit on
-                    whichever row the pointer happened to exit through. */}
-                <SidebarMenu onPointerLeave={() => setHovered(null)}>
+                <SidebarMenu>
                   {NAV.map((item) => {
                     const hasChildren = item.children.length > 0;
 
+                    // A leaf is a plain button. Wrapped in a Collapsible it
+                    // would toggle an empty section instead of selecting.
                     if (!hasChildren) {
                       return (
                         <SidebarMenuItem key={item.id}>
@@ -156,10 +126,7 @@ export default function Sidebar2Demo() {
                             tooltip={item.title}
                             isActive={active === item.id}
                             onClick={() => setActive(item.id)}
-                            onPointerEnter={() => setHovered(item.id)}
-                            className={noInstantHover}
                           >
-                            {hovered === item.id && <Glide />}
                             <item.icon />
                             <span>{item.title}</span>
                           </SidebarMenuButton>
@@ -177,12 +144,7 @@ export default function Sidebar2Demo() {
                       >
                         <SidebarMenuItem>
                           <CollapsibleTrigger asChild>
-                            <SidebarMenuButton
-                              tooltip={item.title}
-                              onPointerEnter={() => setHovered(item.id)}
-                              className={noInstantHover}
-                            >
-                              {hovered === item.id && <Glide />}
+                            <SidebarMenuButton tooltip={item.title}>
                               <item.icon />
                               <span>{item.title}</span>
                               <ChevronRight
@@ -193,7 +155,6 @@ export default function Sidebar2Demo() {
                               />
                             </SidebarMenuButton>
                           </CollapsibleTrigger>
-
                           <CollapsibleContent>
                             <SidebarMenuSub>
                               {item.children.map((child) => (
@@ -201,10 +162,8 @@ export default function Sidebar2Demo() {
                                   <SidebarMenuSubButton
                                     isActive={active === child.id}
                                     onClick={() => setActive(child.id)}
-                                    onPointerEnter={() => setHovered(child.id)}
-                                    className={cn(noInstantHover, "cursor-pointer")}
+                                    className="cursor-pointer"
                                   >
-                                    {hovered === child.id && <Glide />}
                                     <span>{child.title}</span>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
@@ -247,7 +206,7 @@ export default function Sidebar2Demo() {
           <header className="flex h-12 items-center gap-2 border-b border-border px-4">
             <SidebarTrigger />
             <span className="text-sm text-muted-foreground">
-              Run the pointer down the menu — the highlight travels with it.
+              The stock sidebar — hover states cut in and out.
             </span>
           </header>
         </SidebarInset>

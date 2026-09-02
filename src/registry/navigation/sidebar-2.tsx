@@ -94,8 +94,14 @@ function Highlight({ id }: { id: string }) {
     <motion.span
       layoutId={`${id}-highlight`}
       transition={SPRING.default}
-      className="absolute inset-0 rounded-md bg-sidebar-accent"
-    />
+      // Deliberately not sidebar-accent: that is the colour the button
+      // already paints on hover, so the highlight was indistinguishable from
+      // hovering and the whole thing looked like the stock sidebar. A tint
+      // plus a bar on the leading edge reads as "you are here".
+      className="absolute inset-0 rounded-md bg-primary/15 ring-1 ring-inset ring-primary/25"
+    >
+      <span className="absolute inset-y-1 left-0 w-0.5 rounded-full bg-primary" />
+    </motion.span>
   );
 }
 
@@ -148,7 +154,11 @@ function Rail() {
                       <SidebarMenuButton
                         tooltip={item.title}
                         onClick={() => setActive(item.id)}
-                        className="relative"
+                        className={cn(
+                          "relative",
+                          active === item.id &&
+                            "text-primary hover:bg-transparent hover:text-primary",
+                        )}
                       >
                         {active === item.id && <Highlight id="rail" />}
                         <item.icon className="relative" />
@@ -168,7 +178,14 @@ function Rail() {
                   >
                     <SidebarMenuItem>
                       <CollapsibleTrigger asChild>
-                        <SidebarMenuButton tooltip={item.title} className="relative">
+                        <SidebarMenuButton
+                          tooltip={item.title}
+                          className={cn(
+                            "relative",
+                            active === item.id &&
+                              "text-primary hover:bg-transparent hover:text-primary",
+                          )}
+                        >
                           {active === item.id && <Highlight id="rail" />}
                           <item.icon className="relative" />
                           <span className="relative">{item.title}</span>
@@ -187,7 +204,11 @@ function Rail() {
                             <SidebarMenuSubItem key={child.id}>
                               <SidebarMenuSubButton
                                 onClick={() => setActive(child.id)}
-                                className="relative cursor-pointer"
+                                className={cn(
+                                  "relative cursor-pointer",
+                                  active === child.id &&
+                                    "text-primary hover:bg-transparent hover:text-primary",
+                                )}
                               >
                                 {active === child.id && <Highlight id="rail" />}
                                 <span className="relative">{child.title}</span>

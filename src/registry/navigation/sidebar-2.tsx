@@ -6,10 +6,10 @@
  * @tags sidebar, navigation, app, shell, hover, sliding-indicator, must-have
  * @height 640
  * @deps motion
- * @note Sidebar is the baseline; this is that with the hover made continuous. One `layoutId` shared by every row, rendered only inside the hovered one — moving the pointer animates that same element across rather than fading one out and another in. The component's own instant hover fill has to be switched off or you see both at once. The group clears on pointer leave so the highlight does not sit on whichever row you exited through.
+ * @note Sidebar is the baseline; this is that with the hover made continuous. One indicator sits over the menu and animates its own box to whichever row the pointer is on — measured, not re-parented. A `layoutId` rendered inside the hovered row is the obvious way and it does not hold up: it has to unmount in one row and mount in another, and between a top-level row and one nested in a collapsible it stops animating between them. The component's own instant hover fill has to be switched off or you see both at once. The group clears on pointer leave so the highlight does not sit on whichever row you exited through.
  * @source src/components/ui/sidebar.tsx
  */
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { motion } from "motion/react";
 import {
   ChevronRight,
@@ -80,22 +80,31 @@ const NAV = [
 ];
 
 /**
- * The travelling hover.
+ * One highlight for the whole menu, positioned by measurement.
  *
- * Rendered only inside the row the pointer is over, and every row shares the
- * same layoutId — so moving to the next row moves this element there rather
- * than unmounting it here and mounting a new one over there. That is the
- * whole difference between a highlight that slides and one that blinks.
+ * The obvious approach is a `layoutId` rendered inside whichever row is
+ * hovered, but that unmounts the element in one row and mounts it in another,
+ * and across subtrees — a top-level row and one nested inside a collapsible —
+ * it does not reliably animate between the two. This never unmounts. It sits
+ * over the menu and animates its own box to wherever the pointer is, so every
+ * row glides to every other row, however far apart or however nested.
  */
-function Glide() {
+function Glide({ box }: { box: { top: number; left: number; width: number; height: number } | null }) {
   const { state } = useSidebar();
   // Nothing to slide along at icon width.
   if (state === "collapsed") return null;
+
   return (
-    <motion.span
-      layoutId="sidebar-glide"
+    <motion.div
+      aria-hidden
+      className="pointer-events-none absolute z-0 rounded-md bg-sidebar-accent"
+      initial={false}
+      animate={
+        box
+          ? { opacity: 1, top: box.top, left: box.left, width: box.width, height: box.height }
+          : { opacity: 0 }
+      }
       transition={SPRING.default}
-      className="absolute inset-0 -z-10 rounded-md bg-sidebar-accent"
     />
   );
 }
@@ -103,7 +112,26 @@ function Glide() {
 export default function Sidebar2Demo() {
   const [active, setActive] = useState("history");
   const [open, setOpen] = useState<string[]>(["playground"]);
-  const [hovered, setHovered] = useState<string | null>(null);
+  const menuRef = useRef<HTMLDivElement>(null);
+  const [box, setBox] = useState<
+    { top: number; left: number; width: number; height: number } | null
+  >(null);
+
+  /**
+   * One handler for the whole menu rather than one per row: it finds the row
+   * under the pointer, so nested items and any rows added later are covered
+   * without wiring each one up.
+   */
+  const track = (e: React.PointerEvent) => {
+    const row = (e.target as HTMLElement).closest<HTMLElement>(
+      "[data-slot='sidebar-menu-button'],[data-slot='collapsible-trigger'],[data-slot='sidebar-menu-sub-button']",
+    );
+    const host = menuRef.current;
+    if (!row || !host || !host.contains(row)) return;
+    const r = row.getBoundingClientRect();
+    const h = host.getBoundingClientRect();
+    setBox({ top: r.top - h.top, left: r.left - h.left, width: r.width, height: r.height });
+  };
 
   const toggle = (id: string) =>
     setOpen((prev) =>
@@ -143,9 +171,17 @@ export default function Sidebar2Demo() {
             <SidebarGroup>
               <SidebarGroupLabel>Platform</SidebarGroupLabel>
               <SidebarGroupContent>
-                {/* Clears on leave, so the highlight does not stay lit on
-                    whichever row the pointer happened to exit through. */}
-                <SidebarMenu onPointerLeave={() => setHovered(null)}>
+                {/* The indicator is positioned against this box, so it has
+                    to be the positioned ancestor of every row. Clearing on
+                    leave stops it sitting lit on whichever row you left by. */}
+                <div
+                  ref={menuRef}
+                  className="relative"
+                  onPointerOver={track}
+                  onPointerLeave={() => setBox(null)}
+                >
+                <Glide box={box} />
+                <SidebarMenu>
                   {NAV.map((item) => {
                     const hasChildren = item.children.length > 0;
 
@@ -156,10 +192,8 @@ export default function Sidebar2Demo() {
                             tooltip={item.title}
                             isActive={active === item.id}
                             onClick={() => setActive(item.id)}
-                            onPointerEnter={() => setHovered(item.id)}
                             className={noInstantHover}
                           >
-                            {hovered === item.id && <Glide />}
                             <item.icon />
                             <span>{item.title}</span>
                           </SidebarMenuButton>
@@ -179,11 +213,9 @@ export default function Sidebar2Demo() {
                           <CollapsibleTrigger asChild>
                             <SidebarMenuButton
                               tooltip={item.title}
-                              onPointerEnter={() => setHovered(item.id)}
-                              className={noInstantHover}
+                                className={noInstantHover}
                             >
-                              {hovered === item.id && <Glide />}
-                              <item.icon />
+                                <item.icon />
                               <span>{item.title}</span>
                               <ChevronRight
                                 className={cn(
@@ -201,10 +233,8 @@ export default function Sidebar2Demo() {
                                   <SidebarMenuSubButton
                                     isActive={active === child.id}
                                     onClick={() => setActive(child.id)}
-                                    onPointerEnter={() => setHovered(child.id)}
                                     className={cn(noInstantHover, "cursor-pointer")}
                                   >
-                                    {hovered === child.id && <Glide />}
                                     <span>{child.title}</span>
                                   </SidebarMenuSubButton>
                                 </SidebarMenuSubItem>
@@ -216,6 +246,7 @@ export default function Sidebar2Demo() {
                     );
                   })}
                 </SidebarMenu>
+                </div>
               </SidebarGroupContent>
             </SidebarGroup>
           </SidebarContent>

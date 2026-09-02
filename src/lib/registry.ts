@@ -29,7 +29,7 @@ export const CATEGORIES: Record<
   },
   navigation: {
     label: "Navigation",
-    blurb: "Navbars, docks, mega menus and command palettes.",
+    blurb: "Navbars, docks, mega menus, command palettes and footers.",
     order: 25,
   },
   pages: {
@@ -39,7 +39,7 @@ export const CATEGORIES: Record<
   },
   sections: {
     label: "Sections",
-    blurb: "Full-width page blocks — bento grids, FAQs, teams, footers.",
+    blurb: "Full-width page blocks — bento grids, FAQs, teams, pricing.",
     order: 30,
   },
   showcase: {

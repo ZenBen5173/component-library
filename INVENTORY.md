@@ -91,10 +91,11 @@
 | [Aurora Hero](src/registry/heroes/aurora-hero.tsx) | Full-bleed aurora gradient with a glass-displacement title and a background-mode switch. | portfolio, hero, gradient, glass, animated |
 | [Perspective Grid](src/registry/heroes/perspective-grid.tsx) | Tilted 3D tile grid that fades out at the edges; tiles light up under the cursor and fade back over 1.5s. | portfolio, hero, 3d, grid, background, cool |
 
-## Navigation (6)
+## Navigation (7)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
+| [Animated Footer](src/registry/navigation/animated-footer.tsx) | Footer whose side images are sampled into interactive ASCII art, with parallax and oversized wordmark. | portfolio, footer, ascii, canvas, parallax |
 | [Awwwards Nav](src/registry/navigation/awwwards-nav.tsx) | Floating pill nav that expands upward into a columned menu panel. | navigation, navbar, expandable, awwwards, portfolio |
 | [Glass Dock](src/registry/navigation/glass-dock.tsx) | macOS-style dock: icons scale and lift as the cursor sweeps past, on a frosted glass bar. | navigation, dock, glass, hover, macos |
 | [Mega Menu Navbar](src/registry/navigation/mega-menu-navbar.tsx) | Sticky top bar whose panels expand into a mega menu — a promo sidebar card plus grouped link columns. | navigation, navbar, mega-menu, saas, website |
@@ -102,12 +103,11 @@
 | [Search Modal](src/registry/navigation/search-modal.tsx) | Collapsed search bar that expands into a full command palette — filter tags, grouped results, ⌘K. | navigation, search, modal, command-palette, hotkey |
 | [Spotlight Navbar](src/registry/navigation/spotlight-navbar.tsx) | Nav links lit by a sliding spotlight that tracks the hovered item and settles on the active one. | navigation, navbar, spotlight, hover |
 
-## Sections (10)
+## Sections (9)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
 | [Agent Bento Grid](src/registry/sections/agent-bento-grid.tsx) | Five-panel bento of self-animating feature cards. A drop-in replacement for a plain feature grid. | versatile, bento, grid, cards, feature, website |
-| [Animated Footer](src/registry/sections/animated-footer.tsx) | Footer whose side images are sampled into interactive ASCII art, with parallax and oversized wordmark. | portfolio, footer, ascii, canvas, parallax |
 | [Expandable Bento Grid](src/registry/sections/expandable-bento-grid.tsx) | Bento tiles that expand in place into a full detail panel when clicked. | bento, grid, expandable, cards, versatile |
 | [FAQ Accordion](src/registry/sections/faq-accordion.tsx) | Disclosure list with a smooth height transition — the standard bottom-of-page FAQ block. | website, faq, accordion, disclosure, versatile |
 | [Logo Marquee](src/registry/sections/logo-marquee.tsx) | Continuously scrolling strip of client logos, pausing on hover, with the edges faded out. | marquee, logos, social-proof, portfolio, website, ticker |

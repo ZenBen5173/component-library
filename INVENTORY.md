@@ -1,6 +1,6 @@
 # Component Inventory
 
-**73 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**74 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
 ## controls (7)
 
@@ -91,7 +91,7 @@
 | [Aurora Hero](src/registry/heroes/aurora-hero.tsx) | Full-bleed aurora gradient with a glass-displacement title and a background-mode switch. | portfolio, hero, gradient, glass, animated |
 | [Perspective Grid](src/registry/heroes/perspective-grid.tsx) | Tilted 3D tile grid that fades out at the edges; tiles light up under the cursor and fade back over 1.5s. | portfolio, hero, 3d, grid, background, cool |
 
-## Navigation (9)
+## Navigation (10)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
@@ -104,6 +104,7 @@
 | [Sidebar 2.0](src/registry/navigation/sidebar-2.tsx) | The stock sidebar with one change: the hover highlight glides from item to item instead of cutting in and out. | sidebar, navigation, app, shell, hover, sliding-indicator, must-have |
 | [Sidebar](src/registry/navigation/sidebar.tsx) | shadcn's sidebar as it ships — workspace switcher, grouped nav with nested sections, user row, and a rail that collapses to icons. | sidebar, navigation, app, shell |
 | [Spotlight Navbar](src/registry/navigation/spotlight-navbar.tsx) | Nav links lit by a sliding spotlight that tracks the hovered item and settles on the active one. | navigation, navbar, spotlight, hover |
+| [Tree Sidebar](src/registry/navigation/tree-sidebar.tsx) | The nav this library runs on — a filterable file tree with connector lines, a hover highlight that glides between rows, and a shortcut hint. | sidebar, navigation, tree, file-browser, docs, hover, sliding-indicator, app, must-have |
 
 ## Sections (9)
 

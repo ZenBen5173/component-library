@@ -1,12 +1,13 @@
 # Component Inventory
 
-**74 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
+**75 components.** Generated from `src/registry`. Run `npm run inventory` to refresh.
 
-## controls (7)
+## controls (8)
 
 | Component | What it is | Tags |
 | --- | --- | --- |
 | [Animated Button](src/registry/controls/animated-button.tsx) | Button with a shine sweeping across the label and a matching gradient running the border. | button, shine, hover, spring, versatile |
+| [Animated Icons](src/registry/controls/animated-icons.tsx) | Lucide icons that draw themselves on hover — and, more usefully, that a whole row can drive so the icon plays when you hover anything around it. | icon, hover, micro-interaction, lucide, navigation, must-have, versatile |
 | [Cursor Card](src/registry/controls/cursor-card.tsx) | Card that reveals a floating image preview pinned to the cursor while hovered. | versatile, card, cursor, hover, image, portfolio |
 | [Generate Button](src/registry/controls/generate-button.tsx) | Pill button with a travelling border light and letters that lift one after another while it works. | button, hover, micro-interaction, ai, cta, portfolio, versatile |
 | [Liquid Metal](src/registry/controls/liquid-metal.tsx) | A WebGL shader used as a moving metal rim — on a button, and around an input that only comes alive once it has focus. | button, input, shader, webgl, metal, hover, portfolio |
